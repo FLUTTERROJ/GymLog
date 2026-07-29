@@ -13,6 +13,14 @@ class SetDraft {
   final double? weightKg;
 }
 
+/// All sets for one exercise while composing a workout.
+class WorkoutExerciseDraft {
+  const WorkoutExerciseDraft({required this.exercise, required this.sets});
+
+  final Exercise exercise;
+  final List<SetDraft> sets;
+}
+
 class WorkoutService extends ChangeNotifier {
   final SupabaseClient _client = Supabase.instance.client;
 
@@ -73,7 +81,8 @@ workout_sets (
           .eq('workout_date', toDateString(today()))
           .maybeSingle();
 
-      _today = row == null ? null : Workout.fromMap(Map<String, dynamic>.from(row));
+      _today =
+          row == null ? null : Workout.fromMap(Map<String, dynamic>.from(row));
     } catch (error) {
       _error = 'Could not load today\'s workout.';
       debugPrint('WorkoutService.loadToday: $error');
@@ -123,47 +132,63 @@ workout_sets (
 
   // ---------------------------------------------------------------- writing
 
-  /// Appends sets for [exercise] to the workout on [date], creating that day's
-  /// workout row if it doesn't exist yet.
-  Future<void> logSets({
+  /// Saves every exercise in a composed workout to the same date.
+  Future<void> logWorkout({
     required DateTime date,
-    required Exercise exercise,
-    required List<SetDraft> sets,
+    required List<WorkoutExerciseDraft> exercises,
   }) async {
-    if (sets.isEmpty) return;
+    final entries = exercises.where((entry) => entry.sets.isNotEmpty).toList();
+    if (entries.isEmpty) return;
 
     final workoutRow = await _client.rpc(
       'get_or_create_workout',
       params: {'p_date': toDateString(date)},
     );
     final workoutId = (workoutRow as Map)['id'] as String;
+    final nextSetNumbers = <String, int>{};
+    final payload = <Map<String, dynamic>>[];
 
-    // Continue numbering if this exercise was already logged earlier today,
-    // rather than colliding with the existing set numbers.
-    final last = await _client
-        .from('workout_sets')
-        .select('set_number')
-        .eq('workout_id', workoutId)
-        .eq('exercise_id', exercise.id)
-        .order('set_number', ascending: false)
-        .limit(1)
-        .maybeSingle();
-
-    var setNumber = ((last?['set_number'] as num?)?.toInt() ?? 0) + 1;
-
-    final payload = sets
-        .map((draft) => {
-              'workout_id': workoutId,
-              'exercise_id': exercise.id,
-              'set_number': setNumber++,
-              'reps': draft.reps,
-              'weight_kg': draft.weightKg,
-            },)
-        .toList();
+    for (final entry in entries) {
+      final existingNext = nextSetNumbers[entry.exercise.id];
+      late int next;
+      if (existingNext == null) {
+        final last = await _client
+            .from('workout_sets')
+            .select('set_number')
+            .eq('workout_id', workoutId)
+            .eq('exercise_id', entry.exercise.id)
+            .order('set_number', ascending: false)
+            .limit(1)
+            .maybeSingle();
+        next = ((last?['set_number'] as num?)?.toInt() ?? 0) + 1;
+      } else {
+        next = existingNext;
+      }
+      for (final set in entry.sets) {
+        payload.add({
+          'workout_id': workoutId,
+          'exercise_id': entry.exercise.id,
+          'set_number': next++,
+          'reps': set.reps,
+          'weight_kg': set.weightKg,
+        });
+      }
+      nextSetNumbers[entry.exercise.id] = next;
+    }
 
     await _client.from('workout_sets').insert(payload);
     await _refreshAfterWrite();
   }
+
+  Future<void> logSets({
+    required DateTime date,
+    required Exercise exercise,
+    required List<SetDraft> sets,
+  }) =>
+      logWorkout(
+        date: date,
+        exercises: [WorkoutExerciseDraft(exercise: exercise, sets: sets)],
+      );
 
   Future<void> deleteSet(String setId) async {
     await _client.from('workout_sets').delete().eq('id', setId);
@@ -183,7 +208,8 @@ workout_sets (
     await _refreshAfterWrite();
   }
 
-  Future<void> saveNotes({required DateTime date, required String notes}) async {
+  Future<void> saveNotes(
+      {required DateTime date, required String notes}) async {
     final workoutRow = await _client.rpc(
       'get_or_create_workout',
       params: {'p_date': toDateString(date)},
@@ -191,10 +217,8 @@ workout_sets (
     final workoutId = (workoutRow as Map)['id'] as String;
 
     final trimmed = notes.trim();
-    await _client
-        .from('workouts')
-        .update({'notes': trimmed.isEmpty ? null : trimmed})
-        .eq('id', workoutId);
+    await _client.from('workouts').update(
+        {'notes': trimmed.isEmpty ? null : trimmed}).eq('id', workoutId);
 
     await _refreshAfterWrite();
   }

@@ -35,7 +35,8 @@ class WorkoutDetailScreen extends StatelessWidget {
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: Text('Remove $name?'),
-        content: const Text('Every set logged for it that day will be deleted.'),
+        content:
+            const Text('Every set logged for it that day will be deleted.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
@@ -93,7 +94,7 @@ class WorkoutDetailScreen extends StatelessWidget {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _addToThisDay(context, workout.date),
         icon: const Icon(Icons.add),
-        label: const Text('Add exercise'),
+        label: const Text('Add to workout'),
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 120),
@@ -122,7 +123,6 @@ class WorkoutDetailScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 20),
-
           for (final group in workout.groups) ...[
             ExerciseGroupCard(
               group: group,
@@ -134,7 +134,6 @@ class WorkoutDetailScreen extends StatelessWidget {
             ),
             const SizedBox(height: 12),
           ],
-
           if (notes != null && notes.isNotEmpty) ...[
             const SizedBox(height: 8),
             Panel(

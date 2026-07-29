@@ -9,9 +9,7 @@ import '../../services/auth_service.dart' show describeError;
 import '../../services/workout_service.dart';
 import '../../widgets/exercise_picker.dart';
 
-/// "What did you do?" — pick an exercise, then add one row per set.
-///
-/// Pops `true` once something was saved, so the caller knows to refresh.
+/// Composes a complete workout, including multiple exercises and their sets.
 class AddExerciseScreen extends StatefulWidget {
   const AddExerciseScreen({super.key, this.initialDate});
 
@@ -23,27 +21,16 @@ class AddExerciseScreen extends StatefulWidget {
 
 class _AddExerciseScreenState extends State<AddExerciseScreen> {
   late DateTime _date = widget.initialDate ?? today();
-  Exercise? _exercise;
-  final List<_SetControllers> _sets = [_SetControllers()];
+  final List<_ExerciseDraft> _exercises = [_ExerciseDraft()];
   bool _saving = false;
   String? _error;
 
   @override
   void dispose() {
-    for (final set in _sets) {
-      set.dispose();
+    for (final exercise in _exercises) {
+      exercise.dispose();
     }
     super.dispose();
-  }
-
-  Future<void> _pickExercise() async {
-    final exercise = await showExercisePicker(context);
-    if (exercise != null && mounted) {
-      setState(() {
-        _exercise = exercise;
-        _error = null;
-      });
-    }
   }
 
   Future<void> _pickDate() async {
@@ -51,7 +38,7 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
       context: context,
       initialDate: _date,
       firstDate: DateTime(today().year - 2),
-      lastDate: today(), // no logging workouts you haven't done yet
+      lastDate: today(),
       helpText: 'Which day was this?',
     );
     if (picked != null && mounted) {
@@ -59,56 +46,97 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
     }
   }
 
-  void _addSet() {
+  Future<void> _pickExercise(int index) async {
+    final exercise = await showExercisePicker(context);
+    if (exercise != null && mounted) {
+      setState(() {
+        _exercises[index].exercise = exercise;
+        _error = null;
+      });
+    }
+  }
+
+  void _addExercise() => setState(() => _exercises.add(_ExerciseDraft()));
+
+  void _removeExercise(int index) {
     setState(() {
-      // Carry the last set's weight forward — usually the same across sets.
-      final previous = _sets.isEmpty ? null : _sets.last;
-      _sets.add(_SetControllers(weight: previous?.weight.text ?? ''));
+      _exercises.removeAt(index).dispose();
+      if (_exercises.isEmpty) _exercises.add(_ExerciseDraft());
     });
   }
 
-  void _removeSet(int index) {
+  void _addSet(_ExerciseDraft exercise) {
     setState(() {
-      _sets.removeAt(index).dispose();
-      if (_sets.isEmpty) _sets.add(_SetControllers());
+      final previous = exercise.sets.last;
+      exercise.sets.add(_SetControllers(weight: previous.weight.text));
+    });
+  }
+
+  void _removeSet(_ExerciseDraft exercise, int index) {
+    setState(() {
+      exercise.sets.removeAt(index).dispose();
+      if (exercise.sets.isEmpty) exercise.sets.add(_SetControllers());
     });
   }
 
   Future<void> _save() async {
     FocusScope.of(context).unfocus();
+    final workout = <WorkoutExerciseDraft>[];
 
-    final exercise = _exercise;
-    if (exercise == null) {
-      setState(() => _error = 'Pick an exercise first.');
-      return;
-    }
-
-    final drafts = <SetDraft>[];
-    for (var i = 0; i < _sets.length; i++) {
-      final repsText = _sets[i].reps.text.trim();
-      if (repsText.isEmpty) continue; // ignore rows left blank
-
-      final reps = int.tryParse(repsText);
-      if (reps == null || reps < 1 || reps > 1000) {
-        setState(() => _error = 'Set ${i + 1}: reps must be between 1 and 1000.');
-        return;
-      }
-
-      final weightText = _sets[i].weight.text.trim().replaceAll(',', '.');
-      double? weight;
-      if (weightText.isNotEmpty) {
-        weight = double.tryParse(weightText);
-        if (weight == null || weight < 0) {
-          setState(() => _error = 'Set ${i + 1}: that weight isn\'t a number.');
+    for (var exerciseIndex = 0;
+        exerciseIndex < _exercises.length;
+        exerciseIndex++) {
+      final draft = _exercises[exerciseIndex];
+      final hasInput = draft.sets.any(
+        (set) =>
+            set.reps.text.trim().isNotEmpty ||
+            set.weight.text.trim().isNotEmpty,
+      );
+      final exercise = draft.exercise;
+      if (exercise == null) {
+        if (hasInput) {
+          setState(() =>
+              _error = 'Exercise ${exerciseIndex + 1}: choose an exercise.');
           return;
         }
+        continue;
       }
 
-      drafts.add(SetDraft(reps: reps, weightKg: weight));
+      final sets = <SetDraft>[];
+      for (var setIndex = 0; setIndex < draft.sets.length; setIndex++) {
+        final row = draft.sets[setIndex];
+        final repsText = row.reps.text.trim();
+        if (repsText.isEmpty) continue;
+
+        final reps = int.tryParse(repsText);
+        if (reps == null || reps < 1 || reps > 1000) {
+          setState(() => _error =
+              '${exercise.name}, set ${setIndex + 1}: reps must be between 1 and 1000.');
+          return;
+        }
+        final weightText = row.weight.text.trim().replaceAll(',', '.');
+        double? weight;
+        if (weightText.isNotEmpty) {
+          weight = double.tryParse(weightText);
+          if (weight == null || weight < 0) {
+            setState(() => _error =
+                '${exercise.name}, set ${setIndex + 1}: that weight is not a number.');
+            return;
+          }
+        }
+        sets.add(SetDraft(reps: reps, weightKg: weight));
+      }
+
+      if (sets.isEmpty) {
+        setState(
+            () => _error = 'Enter reps for at least one ${exercise.name} set.');
+        return;
+      }
+      workout.add(WorkoutExerciseDraft(exercise: exercise, sets: sets));
     }
 
-    if (drafts.isEmpty) {
-      setState(() => _error = 'Enter the reps for at least one set.');
+    if (workout.isEmpty) {
+      setState(() => _error = 'Add at least one exercise and set.');
       return;
     }
 
@@ -116,31 +144,26 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
       _saving = true;
       _error = null;
     });
-
     try {
-      await context.read<WorkoutService>().logSets(
-            date: _date,
-            exercise: exercise,
-            sets: drafts,
-          );
+      await context
+          .read<WorkoutService>()
+          .logWorkout(date: _date, exercises: workout);
       if (mounted) Navigator.of(context).pop(true);
     } catch (error) {
-      if (mounted) {
+      if (mounted)
         setState(() {
           _saving = false;
           _error = describeError(error);
         });
-      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Add exercise'),
+        title: const Text('Add workout'),
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () => Navigator.of(context).pop(false),
@@ -149,125 +172,58 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 120),
         children: [
-          // ------------------------------------------------------------ date
           Panel(
             onTap: _pickDate,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            child: Row(
-              children: [
-                Icon(Icons.event, color: theme.colorScheme.primary),
-                const SizedBox(width: 14),
-                Expanded(
+            child: Row(children: [
+              Icon(Icons.event, color: theme.colorScheme.primary),
+              const SizedBox(width: 14),
+              Expanded(
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Date', style: theme.textTheme.labelMedium),
-                      const SizedBox(height: 2),
-                      Text(
-                        friendlyDate(_date),
-                        style: theme.textTheme.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.w600),
-                      ),
-                    ],
-                  ),
-                ),
-                const Icon(Icons.chevron_right),
-              ],
-            ),
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Date', style: theme.textTheme.labelMedium),
+                  const SizedBox(height: 2),
+                  Text(friendlyDate(_date),
+                      style: theme.textTheme.titleMedium
+                          ?.copyWith(fontWeight: FontWeight.w600)),
+                ],
+              )),
+              const Icon(Icons.chevron_right),
+            ]),
           ),
-          const SizedBox(height: 12),
-
-          // -------------------------------------------------------- exercise
-          Panel(
-            onTap: _pickExercise,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            child: Row(
-              children: [
-                Icon(Icons.fitness_center, color: theme.colorScheme.primary),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Exercise', style: theme.textTheme.labelMedium),
-                      const SizedBox(height: 2),
-                      Text(
-                        _exercise?.name ?? 'Tap to search…',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: _exercise == null
-                              ? theme.colorScheme.outline
-                              : theme.colorScheme.onSurface,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const Icon(Icons.chevron_right),
-              ],
-            ),
-          ),
-
           const SizedBox(height: 24),
-          Row(
-            children: [
-              Text(
-                'Sets',
-                style: theme.textTheme.titleMedium
-                    ?.copyWith(fontWeight: FontWeight.w700),
-              ),
-              const Spacer(),
-              Text(
-                'Weight optional',
-                style: theme.textTheme.bodySmall
-                    ?.copyWith(color: theme.colorScheme.outline),
-              ),
-            ],
+          Text('Exercises',
+              style: theme.textTheme.titleMedium
+                  ?.copyWith(fontWeight: FontWeight.w700)),
+          const SizedBox(height: 4),
+          Text(
+            'Add every exercise in this session, then save once.',
+            style: theme.textTheme.bodySmall
+                ?.copyWith(color: theme.colorScheme.outline),
           ),
           const SizedBox(height: 12),
-
-          for (var i = 0; i < _sets.length; i++)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: _SetRow(
-                index: i,
-                controllers: _sets[i],
-                canRemove: _sets.length > 1,
-                onRemove: () => _removeSet(i),
-                onSubmitted: i == _sets.length - 1 ? _addSet : null,
-              ),
+          for (var index = 0; index < _exercises.length; index++) ...[
+            _ExerciseSection(
+              number: index + 1,
+              draft: _exercises[index],
+              canRemove: _exercises.length > 1,
+              onPickExercise: () => _pickExercise(index),
+              onRemoveExercise: () => _removeExercise(index),
+              onAddSet: () => _addSet(_exercises[index]),
+              onRemoveSet: (setIndex) =>
+                  _removeSet(_exercises[index], setIndex),
             ),
-
-          const SizedBox(height: 4),
+            const SizedBox(height: 12),
+          ],
           OutlinedButton.icon(
-            onPressed: _addSet,
+            onPressed: _addExercise,
             icon: const Icon(Icons.add),
-            label: const Text('Add another set'),
+            label: const Text('Add another exercise'),
           ),
-
           if (_error != null) ...[
             const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.errorContainer,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.error_outline,
-                      size: 20, color: theme.colorScheme.onErrorContainer,),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      _error!,
-                      style:
-                          TextStyle(color: theme.colorScheme.onErrorContainer),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            _ErrorBanner(text: _error!),
           ],
         ],
       ),
@@ -279,12 +235,121 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
               ? const SizedBox(
                   width: 20,
                   height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2.5),
-                )
+                  child: CircularProgressIndicator(strokeWidth: 2.5))
               : const Icon(Icons.check),
-          label: Text(_saving ? 'Saving…' : 'Save to workout'),
+          label: Text(_saving ? 'Saving...' : 'Save workout'),
         ),
       ),
+    );
+  }
+}
+
+class _ExerciseDraft {
+  Exercise? exercise;
+  final List<_SetControllers> sets = [_SetControllers()];
+
+  void dispose() {
+    for (final set in sets) {
+      set.dispose();
+    }
+  }
+}
+
+class _ExerciseSection extends StatelessWidget {
+  const _ExerciseSection({
+    required this.number,
+    required this.draft,
+    required this.canRemove,
+    required this.onPickExercise,
+    required this.onRemoveExercise,
+    required this.onAddSet,
+    required this.onRemoveSet,
+  });
+
+  final int number;
+  final _ExerciseDraft draft;
+  final bool canRemove;
+  final VoidCallback onPickExercise;
+  final VoidCallback onRemoveExercise;
+  final VoidCallback onAddSet;
+  final ValueChanged<int> onRemoveSet;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final exercise = draft.exercise;
+    return Panel(
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Expanded(
+              child:
+                  Text('Exercise $number', style: theme.textTheme.labelLarge)),
+          if (canRemove)
+            IconButton(
+              onPressed: onRemoveExercise,
+              tooltip: 'Remove exercise $number',
+              icon: const Icon(Icons.delete_outline),
+            ),
+        ]),
+        const SizedBox(height: 4),
+        OutlinedButton.icon(
+          onPressed: onPickExercise,
+          icon: const Icon(Icons.fitness_center),
+          label: Align(
+            alignment: Alignment.centerLeft,
+            child: Text(exercise?.name ?? 'Choose exercise'),
+          ),
+        ),
+        const SizedBox(height: 20),
+        Row(children: [
+          Text('Sets',
+              style: theme.textTheme.titleSmall
+                  ?.copyWith(fontWeight: FontWeight.w700)),
+          const Spacer(),
+          Text('Weight optional',
+              style: theme.textTheme.bodySmall
+                  ?.copyWith(color: theme.colorScheme.outline)),
+        ]),
+        const SizedBox(height: 10),
+        for (var index = 0; index < draft.sets.length; index++)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: _SetRow(
+              index: index,
+              controllers: draft.sets[index],
+              canRemove: draft.sets.length > 1,
+              onRemove: () => onRemoveSet(index),
+              onSubmitted: index == draft.sets.length - 1 ? onAddSet : null,
+            ),
+          ),
+        OutlinedButton.icon(
+            onPressed: onAddSet,
+            icon: const Icon(Icons.add),
+            label: const Text('Add set')),
+      ]),
+    );
+  }
+}
+
+class _ErrorBanner extends StatelessWidget {
+  const _ErrorBanner({required this.text});
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+          color: scheme.errorContainer,
+          borderRadius: BorderRadius.circular(12)),
+      child: Row(children: [
+        Icon(Icons.error_outline, size: 20, color: scheme.onErrorContainer),
+        const SizedBox(width: 10),
+        Expanded(
+            child:
+                Text(text, style: TextStyle(color: scheme.onErrorContainer))),
+      ]),
     );
   }
 }
@@ -321,61 +386,48 @@ class _SetRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
-    return Row(
-      children: [
-        SizedBox(
-          width: 34,
-          child: Text(
-            '${index + 1}',
+    return Row(children: [
+      SizedBox(
+        width: 34,
+        child: Text('${index + 1}',
             style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-              color: theme.colorScheme.outline,
-            ),
-          ),
+                fontWeight: FontWeight.w700, color: theme.colorScheme.outline)),
+      ),
+      Expanded(
+        flex: 3,
+        child: TextField(
+          controller: controllers.reps,
+          keyboardType: TextInputType.number,
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          textInputAction: TextInputAction.next,
+          decoration: const InputDecoration(labelText: 'Reps', isDense: true),
         ),
-        Expanded(
-          flex: 3,
-          child: TextField(
-            controller: controllers.reps,
-            keyboardType: TextInputType.number,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            textInputAction: TextInputAction.next,
-            decoration: const InputDecoration(
-              labelText: 'Reps',
-              isDense: true,
-            ),
-          ),
+      ),
+      const SizedBox(width: 10),
+      Expanded(
+        flex: 3,
+        child: TextField(
+          controller: controllers.weight,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          inputFormatters: [
+            FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'))
+          ],
+          textInputAction: TextInputAction.done,
+          onSubmitted: onSubmitted == null ? null : (_) => onSubmitted!(),
+          decoration: const InputDecoration(labelText: 'kg', isDense: true),
         ),
-        const SizedBox(width: 10),
-        Expanded(
-          flex: 3,
-          child: TextField(
-            controller: controllers.weight,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            inputFormatters: [
-              FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
-            ],
-            textInputAction: TextInputAction.done,
-            onSubmitted: onSubmitted == null ? null : (_) => onSubmitted!(),
-            decoration: const InputDecoration(
-              labelText: 'kg',
-              isDense: true,
-            ),
-          ),
-        ),
-        SizedBox(
-          width: 40,
-          child: canRemove
-              ? IconButton(
-                  icon: const Icon(Icons.remove_circle_outline),
-                  color: theme.colorScheme.outline,
-                  onPressed: onRemove,
-                  tooltip: 'Remove set',
-                )
-              : null,
-        ),
-      ],
-    );
+      ),
+      SizedBox(
+        width: 40,
+        child: canRemove
+            ? IconButton(
+                icon: const Icon(Icons.remove_circle_outline),
+                color: theme.colorScheme.outline,
+                onPressed: onRemove,
+                tooltip: 'Remove set',
+              )
+            : null,
+      ),
+    ]);
   }
 }

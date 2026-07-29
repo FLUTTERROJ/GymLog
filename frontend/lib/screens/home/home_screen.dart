@@ -64,8 +64,7 @@ class _HomeScreenState extends State<HomeScreen> {
             child: const Text('Cancel'),
           ),
           FilledButton(
-            onPressed: () =>
-                Navigator.of(dialogContext).pop(controller.text),
+            onPressed: () => Navigator.of(dialogContext).pop(controller.text),
             style: FilledButton.styleFrom(minimumSize: const Size(88, 40)),
             child: const Text('Save'),
           ),
@@ -86,13 +85,17 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Future<void> _confirmDeleteGroup(String workoutId, String exerciseId,
-      String name,) async {
+  Future<void> _confirmDeleteGroup(
+    String workoutId,
+    String exerciseId,
+    String name,
+  ) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: Text('Remove $name?'),
-        content: const Text('Every set you logged for it today will be deleted.'),
+        content:
+            const Text('Every set you logged for it today will be deleted.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
@@ -156,7 +159,7 @@ class _HomeScreenState extends State<HomeScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _addExercise,
         icon: const Icon(Icons.add),
-        label: const Text('Add exercise'),
+        label: const Text('Add workout'),
       ),
       body: RefreshIndicator(
         onRefresh: () => context.read<WorkoutService>().loadToday(),
@@ -340,7 +343,7 @@ class _EmptyToday extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Text(
-              'Add the exercises you did and the reps for each set. '
+              'Add every exercise you did and the reps for each set. '
               'Your trainer sees it as soon as you save.',
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium
@@ -353,7 +356,7 @@ class _EmptyToday extends StatelessWidget {
             child: FilledButton.icon(
               onPressed: onAdd,
               icon: const Icon(Icons.add),
-              label: const Text('Log your first set'),
+              label: const Text('Log your workout'),
             ),
           ),
         ],
