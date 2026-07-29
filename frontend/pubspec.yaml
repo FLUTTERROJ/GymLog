@@ -1,0 +1,30 @@
+name: gymlog
+description: Log the workout you did today and share it with your trainer.
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.5.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Auth (email + Google OAuth), Postgres access, realtime, session persistence.
+  supabase_flutter: ^2.8.0
+
+  # Simple ChangeNotifier-based state management. Nothing here needs more.
+  provider: ^6.1.2
+
+  # Date formatting in the history list.
+  intl: ^0.19.0
+
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
