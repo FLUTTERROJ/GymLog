@@ -6,8 +6,10 @@ import '../../core/formatting.dart';
 import '../../core/theme.dart';
 import '../../models/exercise.dart';
 import '../../services/auth_service.dart' show describeError;
+import '../../services/profile_service.dart';
 import '../../services/workout_service.dart';
 import '../../widgets/exercise_picker.dart';
+import '../../widgets/trainer_picker.dart';
 
 /// Composes a complete workout, including multiple exercises and their sets.
 class AddExerciseScreen extends StatefulWidget {
@@ -22,8 +24,31 @@ class AddExerciseScreen extends StatefulWidget {
 class _AddExerciseScreenState extends State<AddExerciseScreen> {
   late DateTime _date = widget.initialDate ?? today();
   final List<_ExerciseDraft> _exercises = [_ExerciseDraft()];
+  TrainerProfile? _trainer;
   bool _saving = false;
   String? _error;
+
+  bool get _isTrainee =>
+      !(context.read<ProfileService>().profile?.isTrainer ?? false);
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _prefillTrainer());
+  }
+
+  void _prefillTrainer() {
+    final existing =
+        context.read<WorkoutService>().workoutForDate(_date);
+    if (existing?.trainerId == null) return;
+    setState(() {
+      _trainer = TrainerProfile(
+        id: existing!.trainerId!,
+        username: existing.trainerUsername ?? '',
+        fullName: existing.trainerFullName,
+      );
+    });
+  }
 
   @override
   void dispose() {
@@ -43,6 +68,7 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
     );
     if (picked != null && mounted) {
       setState(() => _date = DateTime(picked.year, picked.month, picked.day));
+      _prefillTrainer();
     }
   }
 
@@ -140,14 +166,21 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
       return;
     }
 
+    if (_isTrainee && _trainer == null) {
+      setState(() => _error = 'Choose a trainer to assign this workout to.');
+      return;
+    }
+
     setState(() {
       _saving = true;
       _error = null;
     });
     try {
-      await context
-          .read<WorkoutService>()
-          .logWorkout(date: _date, exercises: workout);
+      await context.read<WorkoutService>().logWorkout(
+            date: _date,
+            exercises: workout,
+            trainerId: _trainer?.id,
+          );
       if (mounted) Navigator.of(context).pop(true);
     } catch (error) {
       if (mounted)
@@ -192,6 +225,13 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
               const Icon(Icons.chevron_right),
             ]),
           ),
+          if (_isTrainee) ...[
+            const SizedBox(height: 24),
+            TrainerPicker(
+              selected: _trainer,
+              onSelected: (trainer) => setState(() => _trainer = trainer),
+            ),
+          ],
           const SizedBox(height: 24),
           Text('Exercises',
               style: theme.textTheme.titleMedium

@@ -172,6 +172,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     _EmptyToday(onAdd: _addExercise)
                   else ...[
                     _TodaySummary(workout: workout!),
+                    if (workout.trainerLabel != null) ...[
+                      const SizedBox(height: 12),
+                      _TrainerChip(label: workout.trainerLabel!),
+                    ],
                     const SizedBox(height: 20),
                     for (final group in groups) ...[
                       ExerciseGroupCard(
@@ -192,6 +196,33 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ],
               ),
+      ),
+    );
+  }
+}
+
+class _TrainerChip extends StatelessWidget {
+  const _TrainerChip({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Panel(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      child: Row(
+        children: [
+          Icon(Icons.fitness_center, size: 18, color: theme.colorScheme.primary),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Assigned to $label',
+              style: theme.textTheme.bodyMedium
+                  ?.copyWith(fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
       ),
     );
   }

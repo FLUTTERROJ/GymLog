@@ -148,6 +148,8 @@ class _DayCard extends StatelessWidget {
                 _Pill(text: '${formatWeight(workout.totalVolume)} kg'),
               if (workout.notes != null && workout.notes!.trim().isNotEmpty)
                 const _Pill(text: 'Has notes', icon: Icons.sticky_note_2_outlined),
+              if (workout.trainerLabel != null)
+                _Pill(text: workout.trainerLabel!, icon: Icons.fitness_center),
             ],
           ),
         ],

@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../services/profile_service.dart';
 import 'history/history_screen.dart';
 import 'home/home_screen.dart';
+import 'trainer/trainees_screen.dart';
 
-/// Bottom-nav container for the two signed-in tabs.
+/// Bottom-nav container. Trainees get Today + History; trainers get Trainees.
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
 
@@ -16,6 +19,12 @@ class _MainShellState extends State<MainShell> {
 
   @override
   Widget build(BuildContext context) {
+    final isTrainer = context.watch<ProfileService>().profile?.isTrainer ?? false;
+
+    if (isTrainer) {
+      return const TraineesScreen();
+    }
+
     return Scaffold(
       // IndexedStack keeps each tab's scroll position while switching.
       body: IndexedStack(

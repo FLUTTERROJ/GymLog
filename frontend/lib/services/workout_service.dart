@@ -30,6 +30,8 @@ class WorkoutService extends ChangeNotifier {
 id,
 workout_date,
 notes,
+trainer_id,
+trainer:profiles!workouts_trainer_id_fkey ( username, full_name ),
 workout_sets (
   id,
   exercise_id,
@@ -132,10 +134,20 @@ workout_sets (
 
   // ---------------------------------------------------------------- writing
 
+  Workout? workoutForDate(DateTime date) {
+    final target = toDateString(date);
+    if (_today != null && toDateString(_today!.date) == target) return _today;
+    for (final workout in _history) {
+      if (toDateString(workout.date) == target) return workout;
+    }
+    return null;
+  }
+
   /// Saves every exercise in a composed workout to the same date.
   Future<void> logWorkout({
     required DateTime date,
     required List<WorkoutExerciseDraft> exercises,
+    String? trainerId,
   }) async {
     final entries = exercises.where((entry) => entry.sets.isNotEmpty).toList();
     if (entries.isEmpty) return;
@@ -177,6 +189,11 @@ workout_sets (
     }
 
     await _client.from('workout_sets').insert(payload);
+    if (trainerId != null) {
+      await _client
+          .from('workouts')
+          .update({'trainer_id': trainerId}).eq('id', workoutId);
+    }
     await _refreshAfterWrite();
   }
 

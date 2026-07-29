@@ -14,10 +14,12 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _name = TextEditingController();
+  final _username = TextEditingController();
   final _email = TextEditingController();
   final _password = TextEditingController();
 
   bool _isSignUp = false;
+  String _role = 'client';
   bool _obscure = true;
   bool _busy = false;
   String? _error;
@@ -26,6 +28,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void dispose() {
     _name.dispose();
+    _username.dispose();
     _email.dispose();
     _password.dispose();
     super.dispose();
@@ -56,6 +59,8 @@ class _LoginScreenState extends State<LoginScreen> {
           email: _email.text,
           password: _password.text,
           fullName: _name.text,
+          username: _username.text,
+          role: _role,
         );
         // With "Confirm email" enabled there's no session yet — the AuthGate
         // won't move, so say why.
@@ -165,6 +170,39 @@ class _LoginScreenState extends State<LoginScreen> {
                             (value == null || value.trim().length < 2)
                                 ? 'Please enter your name'
                                 : null,
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _username,
+                        textCapitalization: TextCapitalization.none,
+                        textInputAction: TextInputAction.next,
+                        decoration: const InputDecoration(
+                          labelText: 'Unique username',
+                          prefixIcon: Icon(Icons.alternate_email),
+                        ),
+                        validator: (value) => _isSignUp &&
+                                !RegExp(r'^[A-Za-z0-9_]{3,30}$')
+                                    .hasMatch((value ?? '').trim())
+                            ? 'Use 3–30 letters, numbers, or underscores'
+                            : null,
+                      ),
+                      const SizedBox(height: 12),
+                      SegmentedButton<String>(
+                        segments: const [
+                          ButtonSegment(
+                            value: 'client',
+                            icon: Icon(Icons.person_outline),
+                            label: Text('Trainee'),
+                          ),
+                          ButtonSegment(
+                            value: 'trainer',
+                            icon: Icon(Icons.fitness_center),
+                            label: Text('Trainer'),
+                          ),
+                        ],
+                        selected: {_role},
+                        onSelectionChanged: (value) =>
+                            setState(() => _role = value.first),
                       ),
                       const SizedBox(height: 12),
                     ],

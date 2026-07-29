@@ -3,10 +3,13 @@ import 'package:provider/provider.dart';
 
 import 'core/theme.dart';
 import 'screens/auth/login_screen.dart';
+import 'screens/auth/account_setup_screen.dart';
 import 'screens/main_shell.dart';
 import 'services/auth_service.dart';
 import 'services/exercise_service.dart';
 import 'services/workout_service.dart';
+import 'services/profile_service.dart';
+import 'services/trainer_service.dart';
 
 class GymLogApp extends StatelessWidget {
   const GymLogApp({super.key});
@@ -18,6 +21,8 @@ class GymLogApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AuthService()),
         ChangeNotifierProvider(create: (_) => ExerciseService()),
         ChangeNotifierProvider(create: (_) => WorkoutService()),
+        ChangeNotifierProvider(create: (_) => ProfileService()),
+        ChangeNotifierProvider(create: (_) => TrainerService()),
       ],
       child: MaterialApp(
         title: 'GymLog',
@@ -54,13 +59,28 @@ class _AuthGateState extends State<AuthGate> {
         if (!mounted) return;
         context.read<ExerciseService>().clear();
         context.read<WorkoutService>().clear();
+        context.read<ProfileService>().clear();
+        context.read<TrainerService>().clear();
         if (userId != null) {
           context.read<ExerciseService>().load(force: true);
-          context.read<WorkoutService>().loadToday();
+          context.read<ProfileService>().load().then((_) {
+            if (!mounted) return;
+            final profile = context.read<ProfileService>().profile;
+            if (profile?.isTrainer == true) {
+              context.read<TrainerService>().loadTrainees();
+            } else {
+              context.read<WorkoutService>().loadToday();
+            }
+          });
         }
       });
     }
 
-    return auth.isSignedIn ? const MainShell() : const LoginScreen();
+    if (!auth.isSignedIn) return const LoginScreen();
+    final profiles = context.watch<ProfileService>();
+    if (profiles.isLoading || profiles.profile == null) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+    return profiles.profile!.isComplete ? const MainShell() : const AccountSetupScreen();
   }
 }

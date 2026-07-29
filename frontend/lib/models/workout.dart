@@ -65,11 +65,17 @@ class Workout {
     required this.date,
     required this.sets,
     this.notes,
+    this.trainerId,
+    this.trainerUsername,
+    this.trainerFullName,
   });
 
   final String id;
   final DateTime date;
   final String? notes;
+  final String? trainerId;
+  final String? trainerUsername;
+  final String? trainerFullName;
   final List<WorkoutSet> sets;
 
   factory Workout.fromMap(Map<String, dynamic> map) {
@@ -84,12 +90,31 @@ class Workout {
         return byTime != 0 ? byTime : a.setNumber.compareTo(b.setNumber);
       });
 
+    final trainer = map['trainer'];
+    Map<String, dynamic>? trainerMap;
+    if (trainer is Map) {
+      trainerMap = Map<String, dynamic>.from(trainer);
+    }
+
     return Workout(
       id: map['id'] as String,
       date: parseDate(map['workout_date'] as String),
       notes: map['notes'] as String?,
+      trainerId: map['trainer_id'] as String?,
+      trainerUsername: trainerMap?['username'] as String?,
+      trainerFullName: trainerMap?['full_name'] as String?,
       sets: sets,
     );
+  }
+
+  String? get trainerLabel {
+    if (trainerUsername != null && trainerUsername!.isNotEmpty) {
+      return '@$trainerUsername';
+    }
+    if (trainerFullName != null && trainerFullName!.trim().isNotEmpty) {
+      return trainerFullName!.trim();
+    }
+    return null;
   }
 
   bool get isEmpty => sets.isEmpty;

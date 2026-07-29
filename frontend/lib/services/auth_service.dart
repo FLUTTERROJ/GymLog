@@ -52,11 +52,17 @@ class AuthService extends ChangeNotifier {
     required String email,
     required String password,
     required String fullName,
+    required String username,
+    required String role,
   }) async {
     final response = await _client.auth.signUp(
       email: email.trim(),
       password: password,
-      data: {'full_name': fullName.trim()},
+      data: {
+        'full_name': fullName.trim(),
+        'username': username.trim(),
+        'role': role,
+      },
       emailRedirectTo: kIsWeb ? null : Env.authRedirectUrl,
     );
     return response.session != null;
@@ -93,7 +99,10 @@ class AuthService extends ChangeNotifier {
 String describeError(Object error) {
   if (error is AuthException) return error.message;
   if (error is PostgrestException) {
-    // Raised by the RPC guards in the database.
+    if (error.code == '23505' &&
+        error.message.toLowerCase().contains('username')) {
+      return 'That username is already taken. Try another one.';
+    }
     return error.message;
   }
   if (error is StorageException) return error.message;
