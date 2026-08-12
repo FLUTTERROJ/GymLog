@@ -31,6 +31,7 @@ class MonthlyChallenge {
     required this.traineeId,
     required this.startDate,
     required this.endDate,
+    this.notes,
     this.traineeUsername,
     this.traineeFullName,
     this.exercises = const [],
@@ -43,6 +44,7 @@ class MonthlyChallenge {
   final String traineeId;
   final DateTime startDate;
   final DateTime endDate;
+  final String? notes;
   final String? traineeUsername;
   final String? traineeFullName;
   final List<ChallengeExercise> exercises;
@@ -71,6 +73,7 @@ class MonthlyChallenge {
       traineeId: map['trainee_id'] as String,
       startDate: DateTime.parse(map['start_date'] as String).toLocal(),
       endDate: DateTime.parse(map['end_date'] as String).toLocal(),
+      notes: map['notes'] as String?,
       traineeUsername: trainee is Map ? (trainee['username'] as String?) : null,
       traineeFullName:
           trainee is Map ? (trainee['full_name'] as String?) : null,

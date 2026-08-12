@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../core/formatting.dart';
 import '../../core/theme.dart';
 import '../../models/exercise.dart';
+import '../../models/workout.dart';
 import '../../services/auth_service.dart' show describeError;
 import '../../services/profile_service.dart';
 import '../../services/workout_service.dart';
@@ -13,9 +14,14 @@ import '../../widgets/trainer_picker.dart';
 
 /// Composes a complete workout, including multiple exercises and their sets.
 class AddExerciseScreen extends StatefulWidget {
-  const AddExerciseScreen({super.key, this.initialDate});
+  const AddExerciseScreen({
+    super.key,
+    this.initialDate,
+    this.existingWorkout,
+  });
 
   final DateTime? initialDate;
+  final Workout? existingWorkout;
 
   @override
   State<AddExerciseScreen> createState() => _AddExerciseScreenState();
@@ -30,10 +36,30 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
 
   bool get _isTrainee =>
       !(context.read<ProfileService>().profile?.isTrainer ?? false);
+  bool get _isEditing => widget.existingWorkout != null;
 
   @override
   void initState() {
     super.initState();
+    if (widget.existingWorkout != null) {
+      _exercises
+        ..clear()
+        ..addAll(widget.existingWorkout!.groups.map((group) {
+          final draft = _ExerciseDraft();
+          draft.exercise = Exercise(
+            id: group.exerciseId,
+            name: group.name,
+            isGlobal: false,
+          );
+          for (final set in group.sets) {
+            draft.sets.add(_SetControllers(
+              reps: set.reps.toString(),
+              weight: set.weightKg == null ? '' : set.weightKg!.toString(),
+            ));
+          }
+          return draft;
+        }));
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) => _prefillTrainer());
   }
 
@@ -176,11 +202,20 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
       _error = null;
     });
     try {
-      await context.read<WorkoutService>().logWorkout(
-            date: _date,
-            exercises: workout,
-            trainerId: _trainer?.id,
-          );
+      if (_isEditing) {
+        await context.read<WorkoutService>().replaceWorkout(
+          workoutId: widget.existingWorkout!.id,
+          date: _date,
+          exercises: workout,
+          trainerId: _trainer?.id,
+        );
+      } else {
+        await context.read<WorkoutService>().logWorkout(
+          date: _date,
+          exercises: workout,
+          trainerId: _trainer?.id,
+        );
+      }
       if (mounted) Navigator.of(context).pop(true);
     } catch (error) {
       if (mounted)
@@ -196,7 +231,7 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Add workout'),
+        title: Text(_isEditing ? 'Edit workout' : 'Add workout'),
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () => Navigator.of(context).pop(false),
@@ -277,7 +312,7 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
                   height: 20,
                   child: CircularProgressIndicator(strokeWidth: 2.5))
               : const Icon(Icons.check),
-          label: Text(_saving ? 'Saving...' : 'Save workout'),
+         label: Text(_saving ? 'Saving...' : (_isEditing ? 'Save changes' : 'Save workout')),
         ),
       ),
     );

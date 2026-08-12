@@ -4,11 +4,19 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/challenge.dart';
 
 class ChallengeEntryDraft {
-  ChallengeEntryDraft({this.name = '', this.reps = 10, this.sets = 3});
+  ChallengeEntryDraft({
+    this.exerciseId,
+    this.name = '',
+    this.reps = 10,
+    this.sets = 3,
+    this.custom = false,
+  });
 
+  String? exerciseId;
   String name;
   int reps;
   int sets;
+  bool custom;
 }
 
 class ChallengeProfileSearchResult {
@@ -103,13 +111,21 @@ class ChallengeService extends ChangeNotifier {
         .from('profiles')
         .select('id, username, full_name')
         .neq('id', userId)
-        .or('username.ilike.%$trimmed%,full_name.ilike.%$trimmed%')
-        .limit(12);
+        .limit(200);
 
-    final results = (rows as List)
+    final matches = (rows as List)
         .map((row) => ChallengeProfileSearchResult.fromMap(
             Map<String, dynamic>.from(row as Map)))
+        .where((user) {
+          final haystack = [user.username ?? '', user.fullName ?? '']
+              .join(' ')
+              .toLowerCase();
+          return haystack.contains(trimmed.toLowerCase());
+        })
+        .take(12)
         .toList();
+
+    final results = matches;
 
     searchResults = results;
     notifyListeners();
@@ -122,6 +138,7 @@ class ChallengeService extends ChangeNotifier {
     required DateTime startDate,
     required DateTime endDate,
     required List<ChallengeEntryDraft> exercises,
+    String? notes,
   }) async {
     if (title.trim().isEmpty) {
       throw StateError('Challenge title is required.');
@@ -148,6 +165,8 @@ class ChallengeService extends ChangeNotifier {
           'title': title.trim(),
           'start_date': startDate.toIso8601String().split('T').first,
           'end_date': endDate.toIso8601String().split('T').first,
+          'notes':
+              notes != null && notes.trim().isNotEmpty ? notes.trim() : null,
         })
         .select()
         .single();

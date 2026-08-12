@@ -3,6 +3,7 @@ create table if not exists public.monthly_challenges (
   trainer_id uuid not null references public.profiles (id) on delete cascade,
   trainee_id uuid not null references public.profiles (id) on delete cascade,
   title text not null,
+  notes text,
   start_date date not null,
   end_date date not null,
   created_at timestamptz not null default now(),

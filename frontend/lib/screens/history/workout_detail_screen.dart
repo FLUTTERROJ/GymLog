@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/formatting.dart';
 import '../../core/theme.dart';
+import '../../models/workout.dart';
 import '../../services/auth_service.dart' show describeError;
 import '../../services/workout_service.dart';
 import '../../widgets/exercise_group_card.dart';
@@ -22,6 +23,18 @@ class WorkoutDetailScreen extends StatelessWidget {
       MaterialPageRoute(
         fullscreenDialog: true,
         builder: (_) => AddExerciseScreen(initialDate: date),
+      ),
+    );
+  }
+
+  Future<void> _editThisDay(BuildContext context, Workout workout) async {
+    await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => AddExerciseScreen(
+          initialDate: workout.date,
+          existingWorkout: workout,
+        ),
       ),
     );
   }
@@ -90,7 +103,16 @@ class WorkoutDetailScreen extends StatelessWidget {
     final notes = workout.notes?.trim();
 
     return Scaffold(
-      appBar: AppBar(title: Text(friendlyDate(workout.date))),
+      appBar: AppBar(
+        title: Text(friendlyDate(workout.date)),
+        actions: [
+          IconButton(
+            tooltip: 'Edit workout',
+            icon: const Icon(Icons.edit_outlined),
+            onPressed: () => _editThisDay(context, workout),
+          ),
+        ],
+      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _addToThisDay(context, workout.date),
         icon: const Icon(Icons.add),

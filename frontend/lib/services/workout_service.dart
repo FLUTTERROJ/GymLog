@@ -207,6 +207,45 @@ workout_sets (
         exercises: [WorkoutExerciseDraft(exercise: exercise, sets: sets)],
       );
 
+  Future<void> replaceWorkout({
+    required String workoutId,
+    required DateTime date,
+    required List<WorkoutExerciseDraft> exercises,
+    String? trainerId,
+  }) async {
+    final entries = exercises.where((entry) => entry.sets.isNotEmpty).toList();
+    if (entries.isEmpty) return;
+
+    final payload = <Map<String, dynamic>>[];
+    final nextSetNumbers = <String, int>{};
+
+    for (final entry in entries) {
+      final next = nextSetNumbers[entry.exercise.id] ?? 1;
+      var setNumber = next;
+      for (final set in entry.sets) {
+        payload.add({
+          'workout_id': workoutId,
+          'exercise_id': entry.exercise.id,
+          'set_number': setNumber++,
+          'reps': set.reps,
+          'weight_kg': set.weightKg,
+        });
+      }
+      nextSetNumbers[entry.exercise.id] = setNumber;
+    }
+
+    await _client.from('workout_sets').delete().eq('workout_id', workoutId);
+    if (payload.isNotEmpty) {
+      await _client.from('workout_sets').insert(payload);
+    }
+    if (trainerId != null) {
+      await _client
+          .from('workouts')
+          .update({'trainer_id': trainerId}).eq('id', workoutId);
+    }
+    await _refreshAfterWrite();
+  }
+
   Future<void> deleteSet(String setId) async {
     await _client.from('workout_sets').delete().eq('id', setId);
     await _refreshAfterWrite();

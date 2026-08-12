@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../core/theme.dart';
 import '../../services/challenge_service.dart';
 
 class CreateChallengeScreen extends StatefulWidget {
@@ -12,7 +11,25 @@ class CreateChallengeScreen extends StatefulWidget {
 }
 
 class _CreateChallengeScreenState extends State<CreateChallengeScreen> {
+  static const List<String> _exerciseOptions = [
+    'Push-ups',
+    'Squats',
+    'Lunges',
+    'Plank',
+    'Burpees',
+    'Rows',
+    'Deadlifts',
+    'Bench Press',
+    'Shoulder Press',
+    'Pull-ups',
+    'Dips',
+    'Walking',
+    'Cycling',
+    'Jogging',
+  ];
+
   final _titleController = TextEditingController();
+  final _notesController = TextEditingController();
   final _searchController = TextEditingController();
   final List<ChallengeEntryDraft> _entries = [ChallengeEntryDraft()];
   String? _selectedTraineeId;
@@ -24,6 +41,7 @@ class _CreateChallengeScreenState extends State<CreateChallengeScreen> {
   @override
   void dispose() {
     _titleController.dispose();
+    _notesController.dispose();
     _searchController.dispose();
     super.dispose();
   }
@@ -60,6 +78,7 @@ class _CreateChallengeScreenState extends State<CreateChallengeScreen> {
             startDate: _startDate,
             endDate: _endDate,
             exercises: _entries,
+            notes: _notesController.text,
           );
       if (mounted) Navigator.of(context).pop(true);
     } catch (error) {
@@ -129,56 +148,67 @@ class _CreateChallengeScreenState extends State<CreateChallengeScreen> {
               style: theme.textTheme.titleSmall
                   ?.copyWith(fontWeight: FontWeight.w700)),
           const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _searchController,
-                  decoration: const InputDecoration(
-                      labelText: 'Search username or name'),
-                  onSubmitted: (_) => _search(),
-                ),
-              ),
-              const SizedBox(width: 8),
-              FilledButton(
-                  onPressed: _searching ? null : _search,
-                  child: _searching
-                      ? const Text('Searching...')
-                      : const Text('Search')),
-            ],
+          TextField(
+            controller: _searchController,
+            decoration: const InputDecoration(
+              labelText: 'Search trainee by username or full name',
+              suffixIcon: Icon(Icons.search),
+            ),
+            onChanged: (_) => _search(),
+            onSubmitted: (_) => _search(),
           ),
           if (service.searchResults.isNotEmpty) ...[
             const SizedBox(height: 12),
             ...service.searchResults.map((result) {
               final selected = _selectedTraineeId == result.id;
-              return Panel(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              return InkWell(
                 onTap: () => setState(() => _selectedTraineeId = result.id),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(result.label,
-                              style: theme.textTheme.titleSmall
-                                  ?.copyWith(fontWeight: FontWeight.w700)),
-                          if (result.fullName != null &&
-                              result.fullName!.trim().isNotEmpty)
-                            Text(result.fullName!,
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                    color: theme.colorScheme.outline)),
-                        ],
-                      ),
+                child: Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: selected
+                        ? theme.colorScheme.primaryContainer
+                        : theme.colorScheme.surface,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: selected
+                          ? theme.colorScheme.primary
+                          : theme.colorScheme.outlineVariant,
                     ),
-                    if (selected)
-                      Icon(Icons.check_circle,
-                          color: theme.colorScheme.primary),
-                  ],
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(result.label,
+                                style: theme.textTheme.titleSmall
+                                    ?.copyWith(fontWeight: FontWeight.w700)),
+                            if (result.fullName != null &&
+                                result.fullName!.trim().isNotEmpty)
+                              Text(result.fullName!,
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                      color: theme.colorScheme.outline)),
+                          ],
+                        ),
+                      ),
+                      if (selected)
+                        Icon(Icons.check_circle,
+                            color: theme.colorScheme.primary),
+                    ],
+                  ),
                 ),
               );
             }),
+          ] else if (_searchController.text.trim().isNotEmpty &&
+              !_searching) ...[
+            const SizedBox(height: 12),
+            Text('No matching trainees found.',
+                style: theme.textTheme.bodySmall
+                    ?.copyWith(color: theme.colorScheme.outline)),
           ],
           const SizedBox(height: 16),
           Row(
@@ -201,45 +231,97 @@ class _CreateChallengeScreenState extends State<CreateChallengeScreen> {
             final item = entry.value;
             return Padding(
               padding: const EdgeInsets.only(bottom: 12),
-              child: Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    flex: 4,
-                    child: TextField(
-                      decoration:
-                          InputDecoration(labelText: 'Exercise ${index + 1}'),
-                      onChanged: (value) => item.name = value,
-                    ),
+                  DropdownButtonFormField<String>(
+                    value: item.custom
+                        ? '__custom__'
+                        : (item.exerciseId ??
+                            (item.name.isNotEmpty ? item.name : null)),
+                    decoration:
+                        InputDecoration(labelText: 'Exercise ${index + 1}'),
+                    items: [
+                      ..._exerciseOptions.map(
+                        (exercise) => DropdownMenuItem<String>(
+                          value: exercise,
+                          child: Text(exercise),
+                        ),
+                      ),
+                      const DropdownMenuItem<String>(
+                        value: '__custom__',
+                        child: Text('Add custom exercise'),
+                      ),
+                    ],
+                    onChanged: (value) {
+                      if (value == null) return;
+                      if (value == '__custom__') {
+                        item.custom = true;
+                        item.exerciseId = null;
+                        item.name = '';
+                        setState(() {});
+                        return;
+                      }
+                      item.custom = false;
+                      item.exerciseId = value;
+                      item.name = value;
+                      setState(() {});
+                    },
                   ),
-                  const SizedBox(width: 8),
-                  SizedBox(
-                    width: 85,
-                    child: TextField(
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(labelText: 'Reps'),
-                      onChanged: (value) =>
-                          item.reps = int.tryParse(value) ?? 0,
+                  if (item.custom ||
+                      (item.exerciseId == null && item.name.isNotEmpty))
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: TextFormField(
+                        decoration: const InputDecoration(
+                            labelText: 'Custom exercise name'),
+                        initialValue: item.name,
+                        onChanged: (value) {
+                          item.name = value;
+                        },
+                      ),
                     ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(labelText: 'Reps'),
+                          onChanged: (value) =>
+                              item.reps = int.tryParse(value) ?? 0,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: TextField(
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(labelText: 'Sets'),
+                          onChanged: (value) =>
+                              item.sets = int.tryParse(value) ?? 0,
+                        ),
+                      ),
+                      if (_entries.length > 1)
+                        IconButton(
+                          onPressed: () =>
+                              setState(() => _entries.removeAt(index)),
+                          icon: const Icon(Icons.delete_outline),
+                        ),
+                    ],
                   ),
-                  const SizedBox(width: 8),
-                  SizedBox(
-                    width: 85,
-                    child: TextField(
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(labelText: 'Sets'),
-                      onChanged: (value) =>
-                          item.sets = int.tryParse(value) ?? 0,
-                    ),
-                  ),
-                  if (_entries.length > 1)
-                    IconButton(
-                      onPressed: () => setState(() => _entries.removeAt(index)),
-                      icon: const Icon(Icons.delete_outline),
-                    ),
                 ],
               ),
             );
           }),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _notesController,
+            maxLines: 3,
+            decoration: const InputDecoration(
+              labelText: 'Notes (optional)',
+              alignLabelWithHint: true,
+            ),
+          ),
           if (_error != null) ...[
             const SizedBox(height: 12),
             Text(_error!, style: TextStyle(color: theme.colorScheme.error)),
