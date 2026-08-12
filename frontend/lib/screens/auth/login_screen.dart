@@ -39,6 +39,8 @@ class _LoginScreenState extends State<LoginScreen> {
       _isSignUp = !_isSignUp;
       _error = null;
       _info = null;
+      _role = 'client';
+      _username.clear();
     });
   }
 
@@ -55,11 +57,12 @@ class _LoginScreenState extends State<LoginScreen> {
     final auth = context.read<AuthService>();
     try {
       if (_isSignUp) {
+        final username = _role == 'trainer' ? _username.text : '';
         final signedIn = await auth.signUp(
           email: _email.text,
           password: _password.text,
           fullName: _name.text,
-          username: _username.text,
+          username: username,
           role: _role,
         );
         // With "Confirm email" enabled there's no session yet — the AuthGate
@@ -172,21 +175,6 @@ class _LoginScreenState extends State<LoginScreen> {
                                 : null,
                       ),
                       const SizedBox(height: 12),
-                      TextFormField(
-                        controller: _username,
-                        textCapitalization: TextCapitalization.none,
-                        textInputAction: TextInputAction.next,
-                        decoration: const InputDecoration(
-                          labelText: 'Unique username',
-                          prefixIcon: Icon(Icons.alternate_email),
-                        ),
-                        validator: (value) => _isSignUp &&
-                                !RegExp(r'^[A-Za-z0-9_]{3,30}$')
-                                    .hasMatch((value ?? '').trim())
-                            ? 'Use 3–30 letters, numbers, or underscores'
-                            : null,
-                      ),
-                      const SizedBox(height: 12),
                       SegmentedButton<String>(
                         segments: const [
                           ButtonSegment(
@@ -202,9 +190,30 @@ class _LoginScreenState extends State<LoginScreen> {
                         ],
                         selected: {_role},
                         onSelectionChanged: (value) =>
-                            setState(() => _role = value.first),
+                            setState(() {
+                              _role = value.first;
+                              if (_role != 'trainer') _username.clear();
+                            }),
                       ),
                       const SizedBox(height: 12),
+                      if (_role == 'trainer') ...[
+                        TextFormField(
+                          controller: _username,
+                          textCapitalization: TextCapitalization.none,
+                          textInputAction: TextInputAction.next,
+                          decoration: const InputDecoration(
+                            labelText: 'Unique username',
+                            prefixIcon: Icon(Icons.alternate_email),
+                          ),
+                          validator: (value) => _isSignUp &&
+                                  _role == 'trainer' &&
+                                  !RegExp(r'^[A-Za-z0-9_]{3,30}$')
+                                      .hasMatch((value ?? '').trim())
+                              ? 'Use 3–30 letters, numbers, or underscores'
+                              : null,
+                        ),
+                        const SizedBox(height: 12),
+                      ],
                     ],
 
                     TextFormField(
