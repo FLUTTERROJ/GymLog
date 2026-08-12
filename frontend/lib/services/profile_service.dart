@@ -57,11 +57,11 @@ class ProfileService extends ChangeNotifier {
     }
   }
 
-  Future<void> completeSetup({required String username, required String role}) async {
+  Future<void> completeSetup({required String? username, required String role}) async {
     final user = _client.auth.currentUser;
     if (user == null) throw StateError('Not signed in');
     await _client.from('profiles').update({
-      'username': username.trim(),
+      'username': username?.trim(),
       'role': role,
     }).eq('id', user.id);
     await load();
