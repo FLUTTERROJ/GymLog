@@ -111,6 +111,8 @@ class ChallengeService extends ChangeNotifier {
         .from('profiles')
         .select('id, username, full_name')
         .neq('id', userId)
+        .eq('role', 'trainee')
+        .eq('trainer_id', userId)
         .limit(200);
 
     final matches = (rows as List)
