@@ -60,8 +60,10 @@ class ProfileService extends ChangeNotifier {
   Future<void> completeSetup({required String? username, required String role}) async {
     final user = _client.auth.currentUser;
     if (user == null) throw StateError('Not signed in');
+    final normalizedUsername = username?.trim();
+    final fallbackUsername = 'u_${user.id.replaceAll('-', '').substring(0, 10)}';
     await _client.from('profiles').update({
-      'username': username?.trim(),
+      'username': role == 'trainer' ? normalizedUsername : fallbackUsername,
       'role': role,
     }).eq('id', user.id);
     await load();
