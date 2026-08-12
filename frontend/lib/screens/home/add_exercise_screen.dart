@@ -122,7 +122,7 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
       if (exercise == null) {
         if (hasInput) {
           setState(() =>
-              _error = 'Exercise ${exerciseIndex + 1}: choose an exercise.');
+              _error = 'Exercise ${exerciseIndex + 1}: choose an exercise.',);
           return;
         }
         continue;
@@ -137,7 +137,7 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
         final reps = int.tryParse(repsText);
         if (reps == null || reps < 1 || reps > 1000) {
           setState(() => _error =
-              '${exercise.name}, set ${setIndex + 1}: reps must be between 1 and 1000.');
+              '${exercise.name}, set ${setIndex + 1}: reps must be between 1 and 1000.',);
           return;
         }
         final weightText = row.weight.text.trim().replaceAll(',', '.');
@@ -146,7 +146,7 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
           weight = double.tryParse(weightText);
           if (weight == null || weight < 0) {
             setState(() => _error =
-                '${exercise.name}, set ${setIndex + 1}: that weight is not a number.');
+                '${exercise.name}, set ${setIndex + 1}: that weight is not a number.',);
             return;
           }
         }
@@ -155,7 +155,7 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
 
       if (sets.isEmpty) {
         setState(
-            () => _error = 'Enter reps for at least one ${exercise.name} set.');
+            () => _error = 'Enter reps for at least one ${exercise.name} set.',);
         return;
       }
       workout.add(WorkoutExerciseDraft(exercise: exercise, sets: sets));

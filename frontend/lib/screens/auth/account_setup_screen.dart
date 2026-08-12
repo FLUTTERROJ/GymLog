@@ -69,7 +69,7 @@ class _AccountSetupScreenState extends State<AccountSetupScreen> {
           const SizedBox(height: 24),
           FilledButton(onPressed: _busy ? null : _save, child: Text(_busy ? 'Saving...' : 'Continue')),
         ],
-      )),
-    )),
+      ),),
+    ),),
   );
 }
