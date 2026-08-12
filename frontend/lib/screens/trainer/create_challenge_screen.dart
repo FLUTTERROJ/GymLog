@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/theme.dart';
 import '../../services/challenge_service.dart';
 
 class CreateChallengeScreen extends StatefulWidget {
@@ -92,67 +93,32 @@ class _CreateChallengeScreenState extends State<CreateChallengeScreen> {
     final service = context.watch<ChallengeService>();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Create monthly challenge')),
+      appBar: AppBar(
+        title: const Text('Create challenge'),
+        leading: IconButton(
+          icon: const Icon(Icons.close),
+          onPressed: () => Navigator.of(context).pop(false),
+        ),
+      ),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 120),
         children: [
-          TextField(
-            controller: _titleController,
-            decoration: const InputDecoration(labelText: 'Challenge title'),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: InkWell(
-                  onTap: () async {
-                    final picked = await showDatePicker(
-                      context: context,
-                      initialDate: _startDate,
-                      firstDate:
-                          DateTime.now().subtract(const Duration(days: 30)),
-                      lastDate: DateTime.now().add(const Duration(days: 3650)),
-                    );
-                    if (picked != null) setState(() => _startDate = picked);
-                  },
-                  child: InputDecorator(
-                    decoration: const InputDecoration(labelText: 'Start date'),
-                    child: Text(
-                        '${_startDate.day}/${_startDate.month}/${_startDate.year}'),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: InkWell(
-                  onTap: () async {
-                    final picked = await showDatePicker(
-                      context: context,
-                      initialDate: _endDate,
-                      firstDate: _startDate,
-                      lastDate: DateTime.now().add(const Duration(days: 3650)),
-                    );
-                    if (picked != null) setState(() => _endDate = picked);
-                  },
-                  child: InputDecorator(
-                    decoration: const InputDecoration(labelText: 'End date'),
-                    child: Text(
-                        '${_endDate.day}/${_endDate.month}/${_endDate.year}'),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Text('Assign to trainee',
-              style: theme.textTheme.titleSmall
-                  ?.copyWith(fontWeight: FontWeight.w700)),
           const SizedBox(height: 8),
+          Text('Assign to trainee',
+              style: theme.textTheme.titleLarge
+                  ?.copyWith(fontWeight: FontWeight.w700)),
+          const SizedBox(height: 6),
+          Text(
+            'Search by username so your trainee can be assigned this challenge.',
+            style: theme.textTheme.bodyMedium
+                ?.copyWith(color: theme.colorScheme.outline),
+          ),
+          const SizedBox(height: 16),
           TextField(
             controller: _searchController,
             decoration: const InputDecoration(
-              labelText: 'Search trainee by username or full name',
-              suffixIcon: Icon(Icons.search),
+              hintText: 'Search trainees',
+              prefixIcon: Icon(Icons.search),
             ),
             onChanged: (_) => _search(),
             onSubmitted: (_) => _search(),
@@ -164,14 +130,14 @@ class _CreateChallengeScreenState extends State<CreateChallengeScreen> {
               return InkWell(
                 onTap: () => setState(() => _selectedTraineeId = result.id),
                 child: Container(
-                  margin: const EdgeInsets.only(bottom: 8),
+                  margin: const EdgeInsets.only(bottom: 10),
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                   decoration: BoxDecoration(
                     color: selected
                         ? theme.colorScheme.primaryContainer
-                        : theme.colorScheme.surface,
-                    borderRadius: BorderRadius.circular(12),
+                        : theme.colorScheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(18),
                     border: Border.all(
                       color: selected
                           ? theme.colorScheme.primary
@@ -180,139 +146,90 @@ class _CreateChallengeScreenState extends State<CreateChallengeScreen> {
                   ),
                   child: Row(
                     children: [
+                      CircleAvatar(
+                        radius: 18,
+                        backgroundColor: theme.colorScheme.primary,
+                        child: Text(
+                          (result.username ?? result.fullName ?? 'U')
+                              .trim()
+                              .substring(0, 1)
+                              .toUpperCase(),
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: theme.colorScheme.onPrimary,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(result.label,
-                                style: theme.textTheme.titleSmall
+                                style: theme.textTheme.titleMedium
                                     ?.copyWith(fontWeight: FontWeight.w700)),
                             if (result.fullName != null &&
                                 result.fullName!.trim().isNotEmpty)
                               Text(result.fullName!,
-                                  style: theme.textTheme.bodySmall?.copyWith(
+                                  style: theme.textTheme.bodyMedium?.copyWith(
                                       color: theme.colorScheme.outline)),
                           ],
                         ),
                       ),
-                      if (selected)
-                        Icon(Icons.check_circle,
-                            color: theme.colorScheme.primary),
                     ],
                   ),
                 ),
               );
             }),
-          ] else if (_searchController.text.trim().isNotEmpty &&
-              !_searching) ...[
+          ] else if (_searchController.text.trim().isNotEmpty && !_searching) ...[
             const SizedBox(height: 12),
             Text('No matching trainees found.',
                 style: theme.textTheme.bodySmall
                     ?.copyWith(color: theme.colorScheme.outline)),
           ],
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('Exercises',
-                  style: theme.textTheme.titleSmall
-                      ?.copyWith(fontWeight: FontWeight.w700)),
-              TextButton.icon(
-                onPressed: () =>
-                    setState(() => _entries.add(ChallengeEntryDraft())),
-                icon: const Icon(Icons.add),
-                label: const Text('Add'),
-              ),
-            ],
+          const SizedBox(height: 24),
+          Text('Exercises',
+              style: theme.textTheme.titleLarge
+                  ?.copyWith(fontWeight: FontWeight.w700)),
+          const SizedBox(height: 6),
+          Text(
+            'Add every exercise in this challenge, then save once.',
+            style: theme.textTheme.bodyMedium
+                ?.copyWith(color: theme.colorScheme.outline),
           ),
-          const SizedBox(height: 12),
-          ..._entries.asMap().entries.map((entry) {
-            final index = entry.key;
-            final item = entry.value;
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  DropdownButtonFormField<String>(
-                    value: item.custom
-                        ? '__custom__'
-                        : (item.exerciseId ??
-                            (item.name.isNotEmpty ? item.name : null)),
-                    decoration:
-                        InputDecoration(labelText: 'Exercise ${index + 1}'),
-                    items: [
-                      ..._exerciseOptions.map(
-                        (exercise) => DropdownMenuItem<String>(
-                          value: exercise,
-                          child: Text(exercise),
-                        ),
-                      ),
-                      const DropdownMenuItem<String>(
-                        value: '__custom__',
-                        child: Text('Add custom exercise'),
-                      ),
-                    ],
-                    onChanged: (value) {
-                      if (value == null) return;
-                      if (value == '__custom__') {
-                        item.custom = true;
-                        item.exerciseId = null;
-                        item.name = '';
-                        setState(() {});
-                        return;
-                      }
-                      item.custom = false;
-                      item.exerciseId = value;
-                      item.name = value;
-                      setState(() {});
-                    },
-                  ),
-                  if (item.custom ||
-                      (item.exerciseId == null && item.name.isNotEmpty))
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: TextFormField(
-                        decoration: const InputDecoration(
-                            labelText: 'Custom exercise name'),
-                        initialValue: item.name,
-                        onChanged: (value) {
-                          item.name = value;
-                        },
-                      ),
-                    ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          keyboardType: TextInputType.number,
-                          decoration: const InputDecoration(labelText: 'Reps'),
-                          onChanged: (value) =>
-                              item.reps = int.tryParse(value) ?? 0,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: TextField(
-                          keyboardType: TextInputType.number,
-                          decoration: const InputDecoration(labelText: 'Sets'),
-                          onChanged: (value) =>
-                              item.sets = int.tryParse(value) ?? 0,
-                        ),
-                      ),
-                      if (_entries.length > 1)
-                        IconButton(
-                          onPressed: () =>
-                              setState(() => _entries.removeAt(index)),
-                          icon: const Icon(Icons.delete_outline),
-                        ),
-                    ],
-                  ),
-                ],
-              ),
-            );
-          }),
+          const SizedBox(height: 16),
+          for (var index = 0; index < _entries.length; index++) ...[
+            _ChallengeExerciseSection(
+              number: index + 1,
+              draft: _entries[index],
+              canRemove: _entries.length > 1,
+              onRemove: () => setState(() => _entries.removeAt(index)),
+              exerciseOptions: _exerciseOptions,
+              onExerciseSelected: (value) {
+                setState(() {
+                  final entry = _entries[index];
+                  if (value == '__custom__') {
+                    entry.custom = true;
+                    entry.exerciseId = null;
+                    entry.name = '';
+                    return;
+                  }
+                  entry.custom = false;
+                  entry.exerciseId = value;
+                  entry.name = value;
+                });
+              },
+              onCustomChange: (value) {
+                setState(() => _entries[index].name = value);
+              },
+            ),
+            const SizedBox(height: 12),
+          ],
+          OutlinedButton.icon(
+            onPressed: () => setState(() => _entries.add(ChallengeEntryDraft())),
+            icon: const Icon(Icons.add),
+            label: const Text('Add another exercise'),
+          ),
           const SizedBox(height: 16),
           TextField(
             controller: _notesController,
@@ -323,14 +240,153 @@ class _CreateChallengeScreenState extends State<CreateChallengeScreen> {
             ),
           ),
           if (_error != null) ...[
-            const SizedBox(height: 12),
-            Text(_error!, style: TextStyle(color: theme.colorScheme.error)),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.errorContainer,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.error_outline,
+                      size: 20, color: theme.colorScheme.onErrorContainer),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      _error!,
+                      style: TextStyle(color: theme.colorScheme.onErrorContainer),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+      bottomNavigationBar: SafeArea(
+        minimum: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+        child: FilledButton.icon(
+          onPressed: _submit,
+          icon: const Icon(Icons.check),
+          label: const Text('Create challenge'),
+        ),
+      ),
+    );
+  }
+}
+
+class _ChallengeExerciseSection extends StatelessWidget {
+  const _ChallengeExerciseSection({
+    required this.number,
+    required this.draft,
+    required this.canRemove,
+    required this.onRemove,
+    required this.exerciseOptions,
+    required this.onExerciseSelected,
+    required this.onCustomChange,
+  });
+
+  final int number;
+  final ChallengeEntryDraft draft;
+  final bool canRemove;
+  final VoidCallback onRemove;
+  final List<String> exerciseOptions;
+  final ValueChanged<String> onExerciseSelected;
+  final ValueChanged<String> onCustomChange;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final selectedValue = draft.custom
+        ? '__custom__'
+        : (draft.exerciseId ?? (draft.name.isNotEmpty ? draft.name : null));
+
+    return Panel(
+      padding: const EdgeInsets.fromLTRB(16, 14, 12, 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text('Exercise $number',
+                    style: theme.textTheme.labelLarge),
+              ),
+              if (canRemove)
+                IconButton(
+                  icon: const Icon(Icons.delete_outline),
+                  color: theme.colorScheme.outline,
+                  tooltip: 'Remove exercise $number',
+                  onPressed: onRemove,
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          DropdownButtonFormField<String>(
+            value: selectedValue,
+            isExpanded: true,
+            decoration: const InputDecoration(
+              hintText: 'Choose exercise',
+              contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+            ),
+            items: [
+              ...exerciseOptions.map(
+                (exercise) => DropdownMenuItem<String>(
+                  value: exercise,
+                  child: Text(exercise),
+                ),
+              ),
+              const DropdownMenuItem<String>(
+                value: '__custom__',
+                child: Text('Add custom exercise'),
+              ),
+            ],
+            onChanged: (value) {
+              if (value == null) return;
+              onExerciseSelected(value);
+            },
+          ),
+          if (draft.custom || (draft.exerciseId == null && draft.name.isNotEmpty)) ...[
+            const SizedBox(height: 10),
+            TextField(
+              decoration: const InputDecoration(labelText: 'Custom exercise name'),
+              onChanged: onCustomChange,
+            ),
           ],
           const SizedBox(height: 16),
-          FilledButton.icon(
-            onPressed: _submit,
-            icon: const Icon(Icons.check),
-            label: const Text('Create challenge'),
+          Row(
+            children: [
+              Text('Sets',
+                  style: theme.textTheme.titleSmall
+                      ?.copyWith(fontWeight: FontWeight.w700)),
+              const Spacer(),
+              Text('Weight optional',
+                  style: theme.textTheme.bodySmall
+                      ?.copyWith(color: theme.colorScheme.outline)),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  keyboardType: TextInputType.number,
+                  onChanged: (value) =>
+                      draft.reps = int.tryParse(value) ?? 0,
+                  decoration: const InputDecoration(labelText: 'Reps'),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: TextField(
+                  keyboardType: TextInputType.number,
+                  onChanged: (value) =>
+                      draft.sets = int.tryParse(value) ?? 0,
+                  decoration: const InputDecoration(labelText: 'Sets'),
+                ),
+              ),
+            ],
           ),
         ],
       ),
