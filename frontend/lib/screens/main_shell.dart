@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../services/profile_service.dart';
+import 'challenges/challenges_screen.dart';
 import 'history/history_screen.dart';
 import 'home/home_screen.dart';
 import 'trainer/trainees_screen.dart';
@@ -19,7 +20,8 @@ class _MainShellState extends State<MainShell> {
 
   @override
   Widget build(BuildContext context) {
-    final isTrainer = context.watch<ProfileService>().profile?.isTrainer ?? false;
+    final isTrainer =
+        context.watch<ProfileService>().profile?.isTrainer ?? false;
 
     if (isTrainer) {
       return const TraineesScreen();
@@ -29,7 +31,7 @@ class _MainShellState extends State<MainShell> {
       // IndexedStack keeps each tab's scroll position while switching.
       body: IndexedStack(
         index: _index,
-        children: const [HomeScreen(), HistoryScreen()],
+        children: const [HomeScreen(), HistoryScreen(), ChallengesScreen()],
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
@@ -44,6 +46,11 @@ class _MainShellState extends State<MainShell> {
             icon: Icon(Icons.history_outlined),
             selectedIcon: Icon(Icons.history),
             label: 'History',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.flag_outlined),
+            selectedIcon: Icon(Icons.flag),
+            label: 'Challenges',
           ),
         ],
       ),

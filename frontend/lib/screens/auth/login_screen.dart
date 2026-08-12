@@ -57,12 +57,11 @@ class _LoginScreenState extends State<LoginScreen> {
     final auth = context.read<AuthService>();
     try {
       if (_isSignUp) {
-        final username = _role == 'trainer' ? _username.text : '';
         final signedIn = await auth.signUp(
           email: _email.text,
           password: _password.text,
           fullName: _name.text,
-          username: username,
+          username: _username.text,
           role: _role,
         );
         // With "Confirm email" enabled there's no session yet — the AuthGate
@@ -159,7 +158,6 @@ class _LoginScreenState extends State<LoginScreen> {
                           ?.copyWith(color: theme.colorScheme.outline),
                     ),
                     const SizedBox(height: 28),
-
                     if (_isSignUp) ...[
                       TextFormField(
                         controller: _name,
@@ -173,6 +171,20 @@ class _LoginScreenState extends State<LoginScreen> {
                             (value == null || value.trim().length < 2)
                                 ? 'Please enter your name'
                                 : null,
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _username,
+                        textCapitalization: TextCapitalization.none,
+                        textInputAction: TextInputAction.next,
+                        decoration: const InputDecoration(
+                          labelText: 'Unique username',
+                          prefixIcon: Icon(Icons.alternate_email),
+                        ),
+                        validator: (value) => !RegExp(r'^[A-Za-z0-9_]{3,30}$')
+                                .hasMatch((value ?? '').trim())
+                            ? 'Use 3–30 letters, numbers, or underscores'
+                            : null,
                       ),
                       const SizedBox(height: 12),
                       SegmentedButton<String>(
@@ -189,33 +201,13 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ],
                         selected: {_role},
-                        onSelectionChanged: (value) =>
-                            setState(() {
-                              _role = value.first;
-                              if (_role != 'trainer') _username.clear();
-                            }),
+                        onSelectionChanged: (value) => setState(() {
+                          _role = value.first;
+                          if (_role != 'trainer') _username.clear();
+                        }),
                       ),
                       const SizedBox(height: 12),
-                      if (_role == 'trainer') ...[
-                        TextFormField(
-                          controller: _username,
-                          textCapitalization: TextCapitalization.none,
-                          textInputAction: TextInputAction.next,
-                          decoration: const InputDecoration(
-                            labelText: 'Unique username',
-                            prefixIcon: Icon(Icons.alternate_email),
-                          ),
-                          validator: (value) => _isSignUp &&
-                                  _role == 'trainer' &&
-                                  !RegExp(r'^[A-Za-z0-9_]{3,30}$')
-                                      .hasMatch((value ?? '').trim())
-                              ? 'Use 3–30 letters, numbers, or underscores'
-                              : null,
-                        ),
-                        const SizedBox(height: 12),
-                      ],
                     ],
-
                     TextFormField(
                       controller: _email,
                       keyboardType: TextInputType.emailAddress,
@@ -230,11 +222,12 @@ class _LoginScreenState extends State<LoginScreen> {
                         if (email.isEmpty) return 'Please enter your email';
                         final looksValid = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
                             .hasMatch(email);
-                        return looksValid ? null : 'That doesn\'t look like an email';
+                        return looksValid
+                            ? null
+                            : 'That doesn\'t look like an email';
                       },
                     ),
                     const SizedBox(height: 12),
-
                     TextFormField(
                       controller: _password,
                       obscureText: _obscure,
@@ -248,9 +241,11 @@ class _LoginScreenState extends State<LoginScreen> {
                         labelText: 'Password',
                         prefixIcon: const Icon(Icons.lock_outline),
                         suffixIcon: IconButton(
-                          icon: Icon(_obscure
-                              ? Icons.visibility_outlined
-                              : Icons.visibility_off_outlined,),
+                          icon: Icon(
+                            _obscure
+                                ? Icons.visibility_outlined
+                                : Icons.visibility_off_outlined,
+                          ),
                           onPressed: () => setState(() => _obscure = !_obscure),
                         ),
                       ),
@@ -264,7 +259,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         return null;
                       },
                     ),
-
                     if (!_isSignUp)
                       Align(
                         alignment: Alignment.centerRight,
@@ -273,7 +267,6 @@ class _LoginScreenState extends State<LoginScreen> {
                           child: const Text('Forgot password?'),
                         ),
                       ),
-
                     if (_error != null) ...[
                       const SizedBox(height: 8),
                       _Banner(
@@ -292,7 +285,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         foreground: theme.colorScheme.onSecondaryContainer,
                       ),
                     ],
-
                     const SizedBox(height: 20),
                     FilledButton(
                       onPressed: _busy ? null : _submit,
@@ -300,11 +292,11 @@ class _LoginScreenState extends State<LoginScreen> {
                           ? const SizedBox(
                               width: 22,
                               height: 22,
-                              child: CircularProgressIndicator(strokeWidth: 2.5),
+                              child:
+                                  CircularProgressIndicator(strokeWidth: 2.5),
                             )
                           : Text(_isSignUp ? 'Create account' : 'Sign in'),
                     ),
-
                     const SizedBox(height: 20),
                     Row(
                       children: [
@@ -321,22 +313,18 @@ class _LoginScreenState extends State<LoginScreen> {
                       ],
                     ),
                     const SizedBox(height: 20),
-
                     GoogleButton(
                       label: _isSignUp
                           ? 'Sign up with Google'
                           : 'Continue with Google',
                       onPressed: _busy ? null : _google,
                     ),
-
                     const SizedBox(height: 24),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          _isSignUp
-                              ? 'Already have an account?'
-                              : 'New here?',
+                          _isSignUp ? 'Already have an account?' : 'New here?',
                           style: theme.textTheme.bodyMedium,
                         ),
                         TextButton(
@@ -383,7 +371,8 @@ class _Banner extends StatelessWidget {
           Icon(icon, size: 20, color: foreground),
           const SizedBox(width: 10),
           Expanded(
-            child: Text(text, style: TextStyle(color: foreground, height: 1.35)),
+            child:
+                Text(text, style: TextStyle(color: foreground, height: 1.35)),
           ),
         ],
       ),

@@ -9,7 +9,7 @@ class AppProfile {
   final String role;
 
   bool get isTrainer => role == 'trainer';
-  bool get isComplete => username != null && username!.isNotEmpty;
+  bool get isComplete => username != null && username!.trim().isNotEmpty;
 
   factory AppProfile.fromMap(Map<String, dynamic> map) => AppProfile(
         id: map['id'] as String,
@@ -19,7 +19,8 @@ class AppProfile {
 }
 
 class TrainerProfile {
-  const TrainerProfile({required this.id, required this.username, this.fullName});
+  const TrainerProfile(
+      {required this.id, required this.username, this.fullName});
   final String id;
   final String username;
   final String? fullName;
@@ -50,29 +51,33 @@ class ProfileService extends ChangeNotifier {
           .select('id, username, role')
           .eq('id', user.id)
           .maybeSingle();
-      _profile = row == null ? null : AppProfile.fromMap(Map<String, dynamic>.from(row));
+      _profile = row == null
+          ? null
+          : AppProfile.fromMap(Map<String, dynamic>.from(row));
     } finally {
       _loading = false;
       notifyListeners();
     }
   }
 
-  Future<void> completeSetup({required String? username, required String role}) async {
+  Future<void> completeSetup(
+      {required String username, required String role}) async {
     final user = _client.auth.currentUser;
     if (user == null) throw StateError('Not signed in');
-    final normalizedUsername = username?.trim();
-    final fallbackUsername = 'u_${user.id.replaceAll('-', '').substring(0, 10)}';
+    final normalizedUsername = username.trim();
     await _client.from('profiles').update({
-      'username': role == 'trainer' ? normalizedUsername : fallbackUsername,
+      'username': normalizedUsername,
       'role': role,
     }).eq('id', user.id);
     await load();
   }
 
   Future<List<TrainerProfile>> searchTrainers(String query) async {
-    final rows = await _client.rpc('search_trainers', params: {'p_query': query});
+    final rows =
+        await _client.rpc('search_trainers', params: {'p_query': query});
     return (rows as List)
-        .map((row) => TrainerProfile.fromMap(Map<String, dynamic>.from(row as Map)))
+        .map((row) =>
+            TrainerProfile.fromMap(Map<String, dynamic>.from(row as Map)))
         .toList();
   }
 

@@ -5,6 +5,7 @@ import '../../core/formatting.dart';
 import '../../core/theme.dart';
 import '../../services/auth_service.dart';
 import '../../services/trainer_service.dart';
+import 'create_challenge_screen.dart';
 import 'trainee_workouts_screen.dart';
 
 class TraineesScreen extends StatefulWidget {
@@ -57,6 +58,13 @@ class _TraineesScreenState extends State<TraineesScreen> {
           const SizedBox(width: 8),
         ],
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const CreateChallengeScreen()),
+        ),
+        icon: const Icon(Icons.flag_outlined),
+        label: const Text('Create challenge'),
+      ),
       body: RefreshIndicator(
         onRefresh: () => context.read<TrainerService>().loadTrainees(),
         child: Builder(
@@ -104,8 +112,7 @@ class _TraineesScreenState extends State<TraineesScreen> {
                 return Panel(
                   onTap: () => Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (_) =>
-                          TraineeWorkoutsScreen(trainee: trainee),
+                      builder: (_) => TraineeWorkoutsScreen(trainee: trainee),
                     ),
                   ),
                   child: Row(

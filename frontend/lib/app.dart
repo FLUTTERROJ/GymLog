@@ -6,6 +6,7 @@ import 'screens/auth/login_screen.dart';
 import 'screens/auth/account_setup_screen.dart';
 import 'screens/main_shell.dart';
 import 'services/auth_service.dart';
+import 'services/challenge_service.dart';
 import 'services/exercise_service.dart';
 import 'services/workout_service.dart';
 import 'services/profile_service.dart';
@@ -23,6 +24,7 @@ class GymLogApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => WorkoutService()),
         ChangeNotifierProvider(create: (_) => ProfileService()),
         ChangeNotifierProvider(create: (_) => TrainerService()),
+        ChangeNotifierProvider(create: (_) => ChallengeService()),
       ],
       child: MaterialApp(
         title: 'GymLog',
@@ -81,6 +83,8 @@ class _AuthGateState extends State<AuthGate> {
     if (profiles.isLoading || profiles.profile == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
-    return profiles.profile!.isComplete ? const MainShell() : const AccountSetupScreen();
+    return profiles.profile!.isComplete
+        ? const MainShell()
+        : const AccountSetupScreen();
   }
 }
