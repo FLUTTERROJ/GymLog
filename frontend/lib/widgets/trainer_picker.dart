@@ -93,7 +93,7 @@ class _TrainerPickerState extends State<TrainerPicker> {
                       : '?',
                 ),
               ),
-              title: Text('@${selected.username}'),
+              title: Text(selected.username),
               subtitle: selected.fullName == null
                   ? null
                   : Text(selected.fullName!),
@@ -140,7 +140,7 @@ class _TrainerPickerState extends State<TrainerPicker> {
                         : '?',
                   ),
                 ),
-                title: Text('@${trainer.username}'),
+                title: Text(trainer.username),
                 subtitle:
                     trainer.fullName == null ? null : Text(trainer.fullName!),
                 trailing: selected?.id == trainer.id

@@ -99,7 +99,7 @@ class MonthlyChallenge {
 
   String get traineeLabel {
     if (traineeUsername != null && traineeUsername!.trim().isNotEmpty) {
-      return '@$traineeUsername';
+      return traineeUsername!.trim();
     }
     if (traineeFullName != null && traineeFullName!.trim().isNotEmpty) {
       return traineeFullName!.trim();

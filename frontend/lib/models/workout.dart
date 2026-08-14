@@ -109,7 +109,7 @@ class Workout {
 
   String? get trainerLabel {
     if (trainerUsername != null && trainerUsername!.isNotEmpty) {
-      return '@$trainerUsername';
+      return trainerUsername;
     }
     if (trainerFullName != null && trainerFullName!.trim().isNotEmpty) {
       return trainerFullName!.trim();

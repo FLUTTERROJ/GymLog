@@ -179,7 +179,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         textInputAction: TextInputAction.next,
                         decoration: const InputDecoration(
                           labelText: 'Unique username',
-                          prefixIcon: Icon(Icons.alternate_email),
+                          prefixIcon: Icon(Icons.badge_outlined),
                         ),
                         validator: (value) => !RegExp(r'^[A-Za-z0-9_]{3,30}$')
                                 .hasMatch((value ?? '').trim())

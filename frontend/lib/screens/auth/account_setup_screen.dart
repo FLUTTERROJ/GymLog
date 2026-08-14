@@ -83,7 +83,7 @@ class _AccountSetupScreenState extends State<AccountSetupScreen> {
                     textCapitalization: TextCapitalization.none,
                     decoration: const InputDecoration(
                       labelText: 'Unique username',
-                      prefixIcon: Icon(Icons.alternate_email),
+                      prefixIcon: Icon(Icons.badge_outlined),
                     ),
                   ),
                   if (_error != null) ...[

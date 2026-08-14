@@ -27,7 +27,7 @@ class TraineeSummary {
   );
 
   String get displayName {
-    if (username != null && username!.isNotEmpty) return '@$username';
+    if (username != null && username!.isNotEmpty) return username!;
     if (fullName != null && fullName!.trim().isNotEmpty) return fullName!.trim();
     return 'Trainee';
   }

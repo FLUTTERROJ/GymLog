@@ -38,7 +38,7 @@ class ChallengeProfileSearchResult {
       );
 
   String get label {
-    if (username != null && username!.trim().isNotEmpty) return '@$username';
+    if (username != null && username!.trim().isNotEmpty) return username!.trim();
     if (fullName != null && fullName!.trim().isNotEmpty)
       return fullName!.trim();
     return 'User';
