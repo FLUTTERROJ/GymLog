@@ -130,19 +130,29 @@ class ChallengeService extends ChangeNotifier {
     return results;
   }
 
+  /// Creates the challenge for every trainee in [traineeIds].
+  ///
+  /// `monthly_challenges` ties a challenge to exactly one `trainee_id` (each
+  /// trainee tracks their own completions independently), so "assign to
+  /// several trainees at once" means inserting one challenge row per trainee,
+  /// all sharing the same title, dates, and exercise targets.
   Future<void> createChallenge({
-    required String traineeId,
+    required List<String> traineeIds,
     required String title,
     required DateTime startDate,
     required DateTime endDate,
     required List<ChallengeEntryDraft> exercises,
     String? notes,
   }) async {
-    if (title.trim().isEmpty) {
+    final trimmedTitle = title.trim();
+    if (trimmedTitle.isEmpty) {
       throw StateError('Challenge title is required.');
     }
-    if (traineeId.isEmpty) {
-      throw StateError('Select a trainee.');
+    if (traineeIds.isEmpty) {
+      throw StateError('Select at least one trainee.');
+    }
+    if (endDate.isBefore(startDate)) {
+      throw StateError('End date must be on or after the start date.');
     }
     final validExercises = exercises
         .where((entry) =>
@@ -155,34 +165,40 @@ class ChallengeService extends ChangeNotifier {
     final trainerId = _client.auth.currentUser?.id;
     if (trainerId == null) throw StateError('Not signed in.');
 
-    final challengeRow = await _client
-        .from('monthly_challenges')
-        .insert({
-          'trainer_id': trainerId,
-          'trainee_id': traineeId,
-          'title': title.trim(),
-          'start_date': startDate.toIso8601String().split('T').first,
-          'end_date': endDate.toIso8601String().split('T').first,
-          'notes':
-              notes != null && notes.trim().isNotEmpty ? notes.trim() : null,
-        })
-        .select()
-        .single();
+    final trimmedNotes =
+        notes != null && notes.trim().isNotEmpty ? notes.trim() : null;
+    final startDateStr = startDate.toIso8601String().split('T').first;
+    final endDateStr = endDate.toIso8601String().split('T').first;
 
-    final challengeId = challengeRow['id'] as String;
-    final payload = validExercises.asMap().entries.map((entry) {
-      final index = entry.key;
-      final exercise = entry.value;
-      return {
-        'challenge_id': challengeId,
-        'exercise_name': exercise.name.trim(),
-        'target_reps': exercise.reps,
-        'target_sets': exercise.sets,
-        'sort_order': index,
-      };
-    }).toList();
+    for (final traineeId in traineeIds) {
+      final challengeRow = await _client
+          .from('monthly_challenges')
+          .insert({
+            'trainer_id': trainerId,
+            'trainee_id': traineeId,
+            'title': trimmedTitle,
+            'start_date': startDateStr,
+            'end_date': endDateStr,
+            'notes': trimmedNotes,
+          })
+          .select()
+          .single();
 
-    await _client.from('challenge_exercises').insert(payload);
+      final challengeId = challengeRow['id'] as String;
+      final payload = validExercises.asMap().entries.map((entry) {
+        final index = entry.key;
+        final exercise = entry.value;
+        return {
+          'challenge_id': challengeId,
+          'exercise_name': exercise.name.trim(),
+          'target_reps': exercise.reps,
+          'target_sets': exercise.sets,
+          'sort_order': index,
+        };
+      }).toList();
+
+      await _client.from('challenge_exercises').insert(payload);
+    }
   }
 
   Future<void> toggleCompletion({

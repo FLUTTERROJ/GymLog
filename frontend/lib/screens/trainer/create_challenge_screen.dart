@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/formatting.dart';
 import '../../core/theme.dart';
 import '../../services/challenge_service.dart';
 
@@ -33,9 +34,9 @@ class _CreateChallengeScreenState extends State<CreateChallengeScreen> {
   final _notesController = TextEditingController();
   final _searchController = TextEditingController();
   final List<ChallengeEntryDraft> _entries = [ChallengeEntryDraft()];
-  String? _selectedTraineeId;
-  DateTime _startDate = DateTime.now();
-  DateTime _endDate = DateTime.now().add(const Duration(days: 30));
+  final List<ChallengeProfileSearchResult> _selectedTrainees = [];
+  DateTime _startDate = today();
+  DateTime _endDate = today().add(const Duration(days: 30));
   bool _searching = false;
   String? _error;
 
@@ -61,20 +62,67 @@ class _CreateChallengeScreenState extends State<CreateChallengeScreen> {
     }
   }
 
+  void _addTrainee(ChallengeProfileSearchResult trainee) {
+    setState(() {
+      if (!_selectedTrainees.any((t) => t.id == trainee.id)) {
+        _selectedTrainees.add(trainee);
+      }
+      _error = null;
+      _searchController.clear();
+    });
+    context.read<ChallengeService>().clearSearch();
+  }
+
+  void _removeTrainee(String traineeId) {
+    setState(() => _selectedTrainees.removeWhere((t) => t.id == traineeId));
+  }
+
+  Future<void> _pickStartDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _startDate,
+      firstDate: today().subtract(const Duration(days: 365)),
+      lastDate: today().add(const Duration(days: 730)),
+      helpText: 'When does the challenge start?',
+    );
+    if (picked == null || !mounted) return;
+    setState(() {
+      _startDate = DateTime(picked.year, picked.month, picked.day);
+      if (_endDate.isBefore(_startDate)) _endDate = _startDate;
+    });
+  }
+
+  Future<void> _pickEndDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _endDate,
+      firstDate: _startDate,
+      lastDate: today().add(const Duration(days: 730)),
+      helpText: 'When does the challenge end?',
+    );
+    if (picked == null || !mounted) return;
+    setState(() => _endDate = DateTime(picked.year, picked.month, picked.day));
+  }
+
   Future<void> _submit() async {
-    if (_selectedTraineeId == null || _selectedTraineeId!.trim().isEmpty) {
-      setState(() => _error = 'Select a trainee first.');
+    if (_selectedTrainees.isEmpty) {
+      setState(() => _error = 'Select at least one trainee.');
       return;
     }
-
     if (_titleController.text.trim().isEmpty) {
       setState(() => _error = 'Give the challenge a title.');
       return;
     }
+    if (_endDate.isBefore(_startDate)) {
+      setState(() => _error = 'End date must be on or after the start date.');
+      return;
+    }
+
+    setState(() => _error = null);
 
     try {
       await context.read<ChallengeService>().createChallenge(
-            traineeId: _selectedTraineeId!,
+            traineeIds: _selectedTrainees.map((t) => t.id).toList(),
             title: _titleController.text,
             startDate: _startDate,
             endDate: _endDate,
@@ -91,6 +139,10 @@ class _CreateChallengeScreenState extends State<CreateChallengeScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final service = context.watch<ChallengeService>();
+    final results = service.searchResults
+        .where((r) => !_selectedTrainees.any((t) => t.id == r.id))
+        .toList();
+    final query = _searchController.text.trim();
 
     return Scaffold(
       appBar: AppBar(
@@ -104,16 +156,54 @@ class _CreateChallengeScreenState extends State<CreateChallengeScreen> {
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 120),
         children: [
           const SizedBox(height: 8),
-          Text('Assign to trainee',
+          Text('Challenge title',
+              style: theme.textTheme.titleLarge
+                  ?.copyWith(fontWeight: FontWeight.w700)),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _titleController,
+            textCapitalization: TextCapitalization.sentences,
+            decoration: const InputDecoration(
+              hintText: 'e.g. August Strength Challenge',
+            ),
+          ),
+
+          const SizedBox(height: 28),
+          Text('Assign to trainees',
               style: theme.textTheme.titleLarge
                   ?.copyWith(fontWeight: FontWeight.w700)),
           const SizedBox(height: 6),
           Text(
-            'Search by username so your trainee can be assigned this challenge.',
+            'Search by username, tap to add. You can add more than one.',
             style: theme.textTheme.bodyMedium
                 ?.copyWith(color: theme.colorScheme.outline),
           ),
           const SizedBox(height: 16),
+          if (_selectedTrainees.isNotEmpty) ...[
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final trainee in _selectedTrainees)
+                  InputChip(
+                    avatar: CircleAvatar(
+                      backgroundColor: theme.colorScheme.primary,
+                      child: Text(
+                        trainee.label.substring(0, 1).toUpperCase(),
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: theme.colorScheme.onPrimary,
+                        ),
+                      ),
+                    ),
+                    label: Text(trainee.label),
+                    onDeleted: () => _removeTrainee(trainee.id),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 12),
+          ],
           TextField(
             controller: _searchController,
             decoration: const InputDecoration(
@@ -123,26 +213,19 @@ class _CreateChallengeScreenState extends State<CreateChallengeScreen> {
             onChanged: (_) => _search(),
             onSubmitted: (_) => _search(),
           ),
-          if (service.searchResults.isNotEmpty) ...[
+          if (results.isNotEmpty) ...[
             const SizedBox(height: 12),
-            ...service.searchResults.map((result) {
-              final selected = _selectedTraineeId == result.id;
+            ...results.map((result) {
               return InkWell(
-                onTap: () => setState(() => _selectedTraineeId = result.id),
+                onTap: () => _addTrainee(result),
                 child: Container(
                   margin: const EdgeInsets.only(bottom: 10),
                   padding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                   decoration: BoxDecoration(
-                    color: selected
-                        ? theme.colorScheme.primaryContainer
-                        : theme.colorScheme.surfaceContainerHighest,
+                    color: theme.colorScheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(18),
-                    border: Border.all(
-                      color: selected
-                          ? theme.colorScheme.primary
-                          : theme.colorScheme.outlineVariant,
-                    ),
+                    border: Border.all(color: theme.colorScheme.outlineVariant),
                   ),
                   child: Row(
                     children: [
@@ -150,10 +233,7 @@ class _CreateChallengeScreenState extends State<CreateChallengeScreen> {
                         radius: 18,
                         backgroundColor: theme.colorScheme.primary,
                         child: Text(
-                          (result.username ?? result.fullName ?? 'U')
-                              .trim()
-                              .substring(0, 1)
-                              .toUpperCase(),
+                          result.label.substring(0, 1).toUpperCase(),
                           style: theme.textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.w700,
                             color: theme.colorScheme.onPrimary,
@@ -176,18 +256,91 @@ class _CreateChallengeScreenState extends State<CreateChallengeScreen> {
                           ],
                         ),
                       ),
+                      Icon(Icons.add_circle_outline,
+                          color: theme.colorScheme.primary),
                     ],
                   ),
                 ),
               );
             }),
-          ] else if (_searchController.text.trim().isNotEmpty && !_searching) ...[
+          ] else if (query.isNotEmpty && !_searching) ...[
             const SizedBox(height: 12),
             Text('No matching trainees found.',
                 style: theme.textTheme.bodySmall
                     ?.copyWith(color: theme.colorScheme.outline)),
           ],
-          const SizedBox(height: 24),
+
+          const SizedBox(height: 28),
+          Text('Duration',
+              style: theme.textTheme.titleLarge
+                  ?.copyWith(fontWeight: FontWeight.w700)),
+          const SizedBox(height: 6),
+          Text(
+            'When does this challenge run?',
+            style: theme.textTheme.bodyMedium
+                ?.copyWith(color: theme.colorScheme.outline),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Panel(
+                  onTap: _pickStartDate,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.event,
+                              color: theme.colorScheme.primary, size: 20),
+                          const SizedBox(width: 8),
+                          Text('Starts', style: theme.textTheme.labelMedium),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        friendlyDate(_startDate),
+                        style: theme.textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w600),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Panel(
+                  onTap: _pickEndDate,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.event_available,
+                              color: theme.colorScheme.primary, size: 20),
+                          const SizedBox(width: 8),
+                          Text('Ends', style: theme.textTheme.labelMedium),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        friendlyDate(_endDate),
+                        style: theme.textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w600),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 28),
           Text('Exercises',
               style: theme.textTheme.titleLarge
                   ?.copyWith(fontWeight: FontWeight.w700)),
