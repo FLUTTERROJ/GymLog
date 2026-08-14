@@ -144,7 +144,15 @@ class _MonthlyChallengeDetailScreenState
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final challenge = widget.challenge;
+    // toggleCompletion() reloads ChallengeService.challenges into fresh
+    // objects; widget.challenge is the snapshot from when this screen was
+    // opened and never gets those updates, so pull the live one back out by
+    // id instead of trusting it for anything completion-related.
+    final service = context.watch<ChallengeService>();
+    final challenge = service.challenges.firstWhere(
+      (c) => c.id == widget.challenge.id,
+      orElse: () => widget.challenge,
+    );
     final totalDays =
         challenge.endDate.difference(challenge.startDate).inDays + 1;
 
