@@ -119,6 +119,8 @@ class _MonthlyChallengeDetailScreenState
     extends State<MonthlyChallengeDetailScreen> {
   late DateTime _selectedDate;
 
+  bool get _isFutureDate => _selectedDate.isAfter(today());
+
   @override
   void initState() {
     super.initState();
@@ -132,6 +134,7 @@ class _MonthlyChallengeDetailScreenState
   }
 
   Future<void> _toggleExercise(ChallengeExercise exercise, bool value) async {
+    if (_isFutureDate) return; // belt-and-braces; the checkbox is disabled too
     await context.read<ChallengeService>().toggleCompletion(
           challengeId: widget.challenge.id,
           exerciseId: exercise.id,
@@ -201,6 +204,33 @@ class _MonthlyChallengeDetailScreenState
                   ],
                 ),
                 const SizedBox(height: 12),
+                if (_isFutureDate) ...[
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.secondaryContainer,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.lock_outline,
+                            size: 18,
+                            color: theme.colorScheme.onSecondaryContainer),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            "This day hasn't happened yet, so it can't be "
+                            'ticked off until it arrives.',
+                            style: TextStyle(
+                                color: theme.colorScheme.onSecondaryContainer),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
                 if (challenge.exercises.isEmpty)
                   Text('No exercises assigned yet.',
                       style: theme.textTheme.bodyMedium)
@@ -212,11 +242,17 @@ class _MonthlyChallengeDetailScreenState
                       child: CheckboxListTile(
                         value: challenge.isExerciseDone(
                             exercise.id, _selectedDate),
-                        onChanged: (value) =>
-                            _toggleExercise(exercise, value == true),
+                        onChanged: _isFutureDate
+                            ? null
+                            : (value) =>
+                                _toggleExercise(exercise, value == true),
                         title: Text(exercise.name),
                         subtitle: Text(
                             '${exercise.reps} reps • ${exercise.sets} sets'),
+                        secondary: _isFutureDate
+                            ? Icon(Icons.lock_outline,
+                                color: theme.colorScheme.outline)
+                            : null,
                         controlAffinity: ListTileControlAffinity.leading,
                       ),
                     ),
