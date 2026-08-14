@@ -104,16 +104,12 @@ class ChallengeService extends ChangeNotifier {
       return const [];
     }
 
-    final userId = _client.auth.currentUser?.id;
-    if (userId == null) return const [];
-
-    final rows = await _client
-        .from('profiles')
-        .select('id, username, full_name')
-        .neq('id', userId)
-        .eq('role', 'client')
-        .eq('trainer_id', userId)
-        .limit(200);
+    // Trainers can't read other users' `profiles` rows directly (RLS only
+    // allows that through the security-definer get_my_trainees() RPC), and
+    // trainer assignment now lives per-workout rather than on the profile —
+    // so this pulls the same list the trainees screen uses and filters it
+    // locally by the search text.
+    final rows = await _client.rpc('get_my_trainees');
 
     final matches = (rows as List)
         .map((row) => ChallengeProfileSearchResult.fromMap(
