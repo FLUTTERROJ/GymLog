@@ -6,6 +6,7 @@ import 'screens/auth/login_screen.dart';
 import 'screens/auth/account_setup_screen.dart';
 import 'screens/main_shell.dart';
 import 'services/auth_service.dart';
+import 'services/calendar_service.dart';
 import 'services/challenge_service.dart';
 import 'services/exercise_service.dart';
 import 'services/workout_service.dart';
@@ -25,6 +26,7 @@ class GymLogApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ProfileService()),
         ChangeNotifierProvider(create: (_) => TrainerService()),
         ChangeNotifierProvider(create: (_) => ChallengeService()),
+        ChangeNotifierProvider(create: (_) => CalendarService()),
       ],
       child: MaterialApp(
         title: 'GymLog',
@@ -63,6 +65,7 @@ class _AuthGateState extends State<AuthGate> {
         context.read<WorkoutService>().clear();
         context.read<ProfileService>().clear();
         context.read<TrainerService>().clear();
+        context.read<CalendarService>().clear();
         if (userId != null) {
           context.read<ExerciseService>().load(force: true);
           context.read<ProfileService>().load().then((_) {
@@ -70,6 +73,7 @@ class _AuthGateState extends State<AuthGate> {
             final profile = context.read<ProfileService>().profile;
             if (profile?.isTrainer == true) {
               context.read<TrainerService>().loadTrainees();
+              context.read<CalendarService>().loadStatus();
             } else {
               context.read<WorkoutService>().loadToday();
             }

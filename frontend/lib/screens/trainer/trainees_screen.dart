@@ -5,6 +5,7 @@ import '../../core/formatting.dart';
 import '../../core/theme.dart';
 import '../../services/auth_service.dart';
 import '../../services/trainer_service.dart';
+import 'calendar_settings_screen.dart';
 import 'create_challenge_screen.dart';
 import 'trainee_workouts_screen.dart';
 
@@ -49,6 +50,13 @@ class _TraineesScreenState extends State<TraineesScreen> {
             tooltip: 'Refresh',
             icon: const Icon(Icons.refresh),
             onPressed: () => context.read<TrainerService>().loadTrainees(),
+          ),
+          IconButton(
+            tooltip: 'Calendar reminders',
+            icon: const Icon(Icons.event_available_outlined),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const CalendarSettingsScreen()),
+            ),
           ),
           IconButton(
             tooltip: 'Sign out',
