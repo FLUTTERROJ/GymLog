@@ -1,11 +1,11 @@
 {
-    "name": "gymlog",
-    "short_name": "gymlog",
+    "name": "GymLog",
+    "short_name": "GymLog",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#3E63DD",
+    "theme_color": "#3E63DD",
+    "description": "Log your workouts and share them with your trainer.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
