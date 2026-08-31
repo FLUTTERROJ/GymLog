@@ -4,8 +4,15 @@ import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
 import '../services/profile_service.dart';
 
-class ProfileDrawer extends StatelessWidget {
+class ProfileDrawer extends StatefulWidget {
   const ProfileDrawer({super.key});
+
+  @override
+  State<ProfileDrawer> createState() => _ProfileDrawerState();
+}
+
+class _ProfileDrawerState extends State<ProfileDrawer> {
+  bool _showProfile = false;
 
   @override
   Widget build(BuildContext context) {
@@ -27,63 +34,69 @@ class ProfileDrawer extends StatelessWidget {
                   const SizedBox(height: 8),
                   ListTile(
                     leading: const Icon(Icons.person_outline),
-                    trailing: const Icon(Icons.chevron_right),
+                    trailing: Icon(
+                      _showProfile ? Icons.expand_less : Icons.chevron_right,
+                    ),
                     title: const Text('Profile'),
+                    onTap: () => setState(() => _showProfile = !_showProfile),
                   ),
-                  const SizedBox(height: 8),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(4, 0, 4, 12),
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 28,
-                          backgroundColor: theme.colorScheme.primary,
-                          child: Text(
-                            (profile?.username ?? auth.displayName)
-                                    .trim()
-                                    .isNotEmpty
-                                ? (profile?.username ?? auth.displayName)
-                                    .trim()
-                                    .substring(0, 1)
-                                    .toUpperCase()
-                                : '?',
-                            style: theme.textTheme.titleLarge?.copyWith(
-                              color: theme.colorScheme.onPrimary,
-                              fontWeight: FontWeight.w700,
+                  if (_showProfile) ...[
+                    const SizedBox(height: 8),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(4, 0, 4, 12),
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 28,
+                            backgroundColor: theme.colorScheme.primary,
+                            child: Text(
+                              (profile?.username ?? auth.displayName)
+                                      .trim()
+                                      .isNotEmpty
+                                  ? (profile?.username ?? auth.displayName)
+                                      .trim()
+                                      .substring(0, 1)
+                                      .toUpperCase()
+                                  : '?',
+                              style: theme.textTheme.titleLarge?.copyWith(
+                                color: theme.colorScheme.onPrimary,
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                auth.displayName,
-                                style: theme.textTheme.titleMedium
-                                    ?.copyWith(fontWeight: FontWeight.w700),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                auth.email,
-                                style: theme.textTheme.bodySmall
-                                    ?.copyWith(color: theme.colorScheme.outline),
-                              ),
-                            ],
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  auth.displayName,
+                                  style: theme.textTheme.titleMedium
+                                      ?.copyWith(fontWeight: FontWeight.w700),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  auth.email,
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: theme.colorScheme.outline,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                  PanelRow(label: 'Name', value: auth.displayName),
-                  const SizedBox(height: 8),
-                  PanelRow(label: 'Email', value: auth.email),
-                  const SizedBox(height: 8),
-                  PanelRow(
-                    label: 'Username',
-                    value: profile?.username ?? 'Not set',
-                  ),
-                  const SizedBox(height: 8),
+                    PanelRow(label: 'Name', value: auth.displayName),
+                    const SizedBox(height: 8),
+                    PanelRow(label: 'Email', value: auth.email),
+                    const SizedBox(height: 8),
+                    PanelRow(
+                      label: 'Username',
+                      value: profile?.username ?? 'Not set',
+                    ),
+                    const SizedBox(height: 8),
+                  ],
                   ListTile(
                     title: const Text('Change password'),
                     subtitle: const Text('Placeholder — implement later'),
