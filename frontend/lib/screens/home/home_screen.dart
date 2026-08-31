@@ -370,23 +370,23 @@ class _ThemeToggleButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final themeSvc = context.watch<ThemeService>();
     final mode = themeSvc.mode;
+    final platformBrightness = MediaQuery.platformBrightnessOf(context);
+    final showingDark =
+        mode == ThemeMode.dark ||
+        (mode == ThemeMode.system && platformBrightness == Brightness.dark);
 
-    IconData icon;
     String tooltip;
     if (mode == ThemeMode.system) {
-      icon = Icons.brightness_auto;
       tooltip = 'Theme: device';
     } else if (mode == ThemeMode.light) {
-      icon = Icons.wb_sunny;
       tooltip = 'Theme: light';
     } else {
-      icon = Icons.nights_stay;
       tooltip = 'Theme: dark';
     }
 
     return PopupMenuButton<String>(
       tooltip: tooltip,
-      icon: Icon(icon),
+      icon: Icon(showingDark ? Icons.nightlight_round : Icons.wb_sunny),
       onSelected: (v) {
         if (v == 'system') themeSvc.setMode(ThemeMode.system);
         if (v == 'light') themeSvc.setMode(ThemeMode.light);

@@ -18,60 +18,63 @@ class ProfileDrawer extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    radius: 28,
-                    backgroundColor: theme.colorScheme.primary,
-                    child: Text(
-                      (profile?.username ?? auth.displayName).trim().isNotEmpty
-                          ? (profile?.username ?? auth.displayName)
-                              .trim()
-                              .substring(0, 1)
-                              .toUpperCase()
-                          : '?',
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        color: theme.colorScheme.onPrimary,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          auth.displayName,
-                          style: theme.textTheme.titleMedium
-                              ?.copyWith(fontWeight: FontWeight.w700),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          auth.email,
-                          style: theme.textTheme.bodySmall
-                              ?.copyWith(color: theme.colorScheme.outline),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            const SizedBox(height: 8),
             const Divider(),
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 children: [
                   const SizedBox(height: 8),
-                  Text(
-                    'Profile',
-                    style: theme.textTheme.titleSmall
-                        ?.copyWith(fontWeight: FontWeight.w700),
+                  ListTile(
+                    leading: const Icon(Icons.person_outline),
+                    trailing: const Icon(Icons.chevron_right),
+                    title: const Text('Profile'),
                   ),
                   const SizedBox(height: 8),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(4, 0, 4, 12),
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 28,
+                          backgroundColor: theme.colorScheme.primary,
+                          child: Text(
+                            (profile?.username ?? auth.displayName)
+                                    .trim()
+                                    .isNotEmpty
+                                ? (profile?.username ?? auth.displayName)
+                                    .trim()
+                                    .substring(0, 1)
+                                    .toUpperCase()
+                                : '?',
+                            style: theme.textTheme.titleLarge?.copyWith(
+                              color: theme.colorScheme.onPrimary,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                auth.displayName,
+                                style: theme.textTheme.titleMedium
+                                    ?.copyWith(fontWeight: FontWeight.w700),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                auth.email,
+                                style: theme.textTheme.bodySmall
+                                    ?.copyWith(color: theme.colorScheme.outline),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                   PanelRow(label: 'Name', value: auth.displayName),
                   const SizedBox(height: 8),
                   PanelRow(label: 'Email', value: auth.email),
