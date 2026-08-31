@@ -4,15 +4,8 @@ import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
 import '../services/profile_service.dart';
 
-class ProfileDrawer extends StatefulWidget {
+class ProfileDrawer extends StatelessWidget {
   const ProfileDrawer({super.key});
-
-  @override
-  State<ProfileDrawer> createState() => _ProfileDrawerState();
-}
-
-class _ProfileDrawerState extends State<ProfileDrawer> {
-  bool _showProfile = false;
 
   @override
   Widget build(BuildContext context) {
@@ -34,125 +27,14 @@ class _ProfileDrawerState extends State<ProfileDrawer> {
                   const SizedBox(height: 8),
                   ListTile(
                     leading: const Icon(Icons.person_outline),
-                    trailing: Icon(
-                      _showProfile ? Icons.expand_less : Icons.chevron_right,
-                    ),
+                    trailing: const Icon(Icons.chevron_right),
                     title: const Text('Profile'),
-                    onTap: () => setState(() => _showProfile = !_showProfile),
-                  ),
-                  if (_showProfile) ...[
-                    const SizedBox(height: 8),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(4, 0, 4, 12),
-                      child: Row(
-                        children: [
-                          CircleAvatar(
-                            radius: 28,
-                            backgroundColor: theme.colorScheme.primary,
-                            child: Text(
-                              (profile?.username ?? auth.displayName)
-                                      .trim()
-                                      .isNotEmpty
-                                  ? (profile?.username ?? auth.displayName)
-                                      .trim()
-                                      .substring(0, 1)
-                                      .toUpperCase()
-                                  : '?',
-                              style: theme.textTheme.titleLarge?.copyWith(
-                                color: theme.colorScheme.onPrimary,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  auth.displayName,
-                                  style: theme.textTheme.titleMedium
-                                      ?.copyWith(fontWeight: FontWeight.w700),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  auth.email,
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    color: theme.colorScheme.outline,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    PanelRow(label: 'Name', value: auth.displayName),
-                    const SizedBox(height: 8),
-                    PanelRow(label: 'Email', value: auth.email),
-                    const SizedBox(height: 8),
-                    PanelRow(
-                      label: 'Username',
-                      value: profile?.username ?? 'Not set',
-                    ),
-                    const SizedBox(height: 8),
-                  ],
-                  ListTile(
-                    title: const Text('Change password'),
-                    subtitle: const Text('Placeholder — implement later'),
-                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                     onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Change password placeholder'),
-                        ),
+                      Navigator.of(context).pop();
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const ProfileScreen()),
                       );
                     },
-                  ),
-                  const SizedBox(height: 24),
-                  Text(
-                    'Danger zone',
-                    style: theme.textTheme.labelLarge
-                        ?.copyWith(color: theme.colorScheme.error),
-                  ),
-                  const SizedBox(height: 12),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: theme.colorScheme.errorContainer,
-                      foregroundColor: theme.colorScheme.onErrorContainer,
-                    ),
-                    onPressed: () async {
-                      final scaffoldMessenger = ScaffoldMessenger.of(context);
-                      final confirmed = await showDialog<bool>(
-                        context: context,
-                        builder: (dctx) => AlertDialog(
-                          title: const Text('Delete account?'),
-                          content: const Text(
-                            'This will permanently delete your account. This is a placeholder and does not perform deletion.',
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.of(dctx).pop(false),
-                              child: const Text('Cancel'),
-                            ),
-                            FilledButton(
-                              onPressed: () => Navigator.of(dctx).pop(true),
-                              child: const Text('Delete'),
-                            ),
-                          ],
-                        ),
-                      );
-                      if (confirmed == true) {
-                        scaffoldMessenger.showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              'Delete-account placeholder — not implemented',
-                            ),
-                          ),
-                        );
-                      }
-                    },
-                    child: const Text('Delete account'),
                   ),
                 ],
               ),
@@ -169,6 +51,134 @@ class _ProfileDrawerState extends State<ProfileDrawer> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class ProfileScreen extends StatelessWidget {
+  const ProfileScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final auth = context.watch<AuthService>();
+    final profile = context.watch<ProfileService>().profile;
+    final theme = Theme.of(context);
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Profile')),
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(4, 0, 4, 12),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 28,
+                  backgroundColor: theme.colorScheme.primary,
+                  child: Text(
+                    (profile?.username ?? auth.displayName).trim().isNotEmpty
+                        ? (profile?.username ?? auth.displayName)
+                            .trim()
+                            .substring(0, 1)
+                            .toUpperCase()
+                        : '?',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      color: theme.colorScheme.onPrimary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        auth.displayName,
+                        style: theme.textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w700),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        auth.email,
+                        style: theme.textTheme.bodySmall
+                            ?.copyWith(color: theme.colorScheme.outline),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          PanelRow(label: 'Name', value: auth.displayName),
+          const SizedBox(height: 8),
+          PanelRow(label: 'Email', value: auth.email),
+          const SizedBox(height: 8),
+          PanelRow(
+            label: 'Username',
+            value: profile?.username ?? 'Not set',
+          ),
+          const SizedBox(height: 8),
+          ListTile(
+            title: const Text('Change password'),
+            subtitle: const Text('Placeholder — implement later'),
+            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+            onTap: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Change password placeholder'),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'Danger zone',
+            style: theme.textTheme.labelLarge
+                ?.copyWith(color: theme.colorScheme.error),
+          ),
+          const SizedBox(height: 12),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: theme.colorScheme.errorContainer,
+              foregroundColor: theme.colorScheme.onErrorContainer,
+            ),
+            onPressed: () async {
+              final scaffoldMessenger = ScaffoldMessenger.of(context);
+              final confirmed = await showDialog<bool>(
+                context: context,
+                builder: (dctx) => AlertDialog(
+                  title: const Text('Delete account?'),
+                  content: const Text(
+                    'This will permanently delete your account. This is a placeholder and does not perform deletion.',
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(dctx).pop(false),
+                      child: const Text('Cancel'),
+                    ),
+                    FilledButton(
+                      onPressed: () => Navigator.of(dctx).pop(true),
+                      child: const Text('Delete'),
+                    ),
+                  ],
+                ),
+              );
+              if (confirmed == true) {
+                scaffoldMessenger.showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'Delete-account placeholder — not implemented',
+                    ),
+                  ),
+                );
+              }
+            },
+            child: const Text('Delete account'),
+          ),
+        ],
       ),
     );
   }
