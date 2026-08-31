@@ -4,10 +4,12 @@ import 'package:provider/provider.dart';
 
 import '../../core/formatting.dart';
 import '../../core/theme.dart';
+import '../../services/theme_service.dart';
 import '../../models/workout.dart';
 import '../../services/auth_service.dart';
 import '../../services/workout_service.dart';
 import '../../widgets/exercise_group_card.dart';
+import '../../widgets/profile_drawer.dart';
 import 'add_exercise_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -18,6 +20,8 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
   @override
   void initState() {
     super.initState();
@@ -134,6 +138,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final groups = workout?.groups ?? const [];
 
     return Scaffold(
+      key: _scaffoldKey,
+      endDrawer: const ProfileDrawer(),
       appBar: AppBar(
         titleSpacing: 20,
         title: Column(
@@ -148,10 +154,12 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
         actions: [
+          _ThemeToggleButton(scaffoldKey: _scaffoldKey),
+          const SizedBox(width: 8),
           IconButton(
-            tooltip: 'Sign out',
-            icon: const Icon(Icons.logout),
-            onPressed: () => context.read<AuthService>().signOut(),
+            tooltip: 'Open profile',
+            icon: const Icon(Icons.menu),
+            onPressed: () => _scaffoldKey.currentState?.openEndDrawer(),
           ),
           const SizedBox(width: 8),
         ],
@@ -342,6 +350,45 @@ class _NotesCard extends StatelessWidget {
           Icon(Icons.edit_outlined, size: 18, color: theme.colorScheme.outline),
         ],
       ),
+    );
+  }
+}
+
+class _ThemeToggleButton extends StatelessWidget {
+  const _ThemeToggleButton({required this.scaffoldKey});
+  final GlobalKey<ScaffoldState> scaffoldKey;
+
+  @override
+  Widget build(BuildContext context) {
+    final themeSvc = context.watch<ThemeService>();
+    final mode = themeSvc.mode;
+
+    IconData icon;
+    String tooltip;
+    if (mode == ThemeMode.system) {
+      icon = Icons.brightness_auto;
+      tooltip = 'Theme: device';
+    } else if (mode == ThemeMode.light) {
+      icon = Icons.wb_sunny;
+      tooltip = 'Theme: light';
+    } else {
+      icon = Icons.nights_stay;
+      tooltip = 'Theme: dark';
+    }
+
+    return PopupMenuButton<String>(
+      tooltip: tooltip,
+      icon: Icon(icon),
+      onSelected: (v) {
+        if (v == 'system') themeSvc.setMode(ThemeMode.system);
+        if (v == 'light') themeSvc.setMode(ThemeMode.light);
+        if (v == 'dark') themeSvc.setMode(ThemeMode.dark);
+      },
+      itemBuilder: (_) => [
+        PopupMenuItem(value: 'system', child: Text('Device')), 
+        PopupMenuItem(value: 'light', child: Text('Light')),
+        PopupMenuItem(value: 'dark', child: Text('Dark')),
+      ],
     );
   }
 }

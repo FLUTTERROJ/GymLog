@@ -12,6 +12,7 @@ import 'services/exercise_service.dart';
 import 'services/workout_service.dart';
 import 'services/profile_service.dart';
 import 'services/trainer_service.dart';
+import 'services/theme_service.dart';
 
 class GymLogApp extends StatelessWidget {
   const GymLogApp({super.key});
@@ -27,14 +28,19 @@ class GymLogApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => TrainerService()),
         ChangeNotifierProvider(create: (_) => ChallengeService()),
         ChangeNotifierProvider(create: (_) => CalendarService()),
+       ChangeNotifierProvider(create: (_) => ThemeService()),
       ],
-      child: MaterialApp(
-        title: 'GymLog',
-        debugShowCheckedModeBanner: false,
-        theme: buildTheme(Brightness.light),
-        darkTheme: buildTheme(Brightness.dark),
-        home: const AuthGate(),
-      ),
+      child: Builder(builder: (context) {
+        final themeSvc = context.watch<ThemeService>();
+        return MaterialApp(
+          title: 'GymLog',
+          debugShowCheckedModeBanner: false,
+          theme: buildTheme(Brightness.light),
+          darkTheme: buildTheme(Brightness.dark),
+          themeMode: themeSvc.mode,
+          home: const AuthGate(),
+        );
+      }),
     );
   }
 }
