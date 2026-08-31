@@ -5,6 +5,7 @@ import '../../core/formatting.dart';
 import '../../core/theme.dart';
 import '../../services/auth_service.dart';
 import '../../services/trainer_service.dart';
+import '../../widgets/profile_drawer.dart';
 import 'calendar_settings_screen.dart';
 import 'create_challenge_screen.dart';
 import 'trainee_workouts_screen.dart';
@@ -17,6 +18,8 @@ class TraineesScreen extends StatefulWidget {
 }
 
 class _TraineesScreenState extends State<TraineesScreen> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
   @override
   void initState() {
     super.initState();
@@ -32,6 +35,8 @@ class _TraineesScreenState extends State<TraineesScreen> {
     final trainer = context.watch<TrainerService>();
 
     return Scaffold(
+      key: _scaffoldKey,
+      endDrawer: const ProfileDrawer(),
       appBar: AppBar(
         titleSpacing: 20,
         title: Column(
@@ -59,9 +64,9 @@ class _TraineesScreenState extends State<TraineesScreen> {
             ),
           ),
           IconButton(
-            tooltip: 'Sign out',
-            icon: const Icon(Icons.logout),
-            onPressed: () => context.read<AuthService>().signOut(),
+            tooltip: 'Open profile',
+            icon: const Icon(Icons.menu),
+            onPressed: () => _scaffoldKey.currentState?.openEndDrawer(),
           ),
           const SizedBox(width: 8),
         ],
@@ -159,8 +164,10 @@ class _TraineesScreenState extends State<TraineesScreen> {
                           ],
                         ),
                       ),
-                      Icon(Icons.chevron_right,
-                          color: theme.colorScheme.outline),
+                      Icon(
+                        Icons.chevron_right,
+                        color: theme.colorScheme.outline,
+                      ),
                     ],
                   ),
                 );
