@@ -1,5 +1,5 @@
 -- ============================================================================
--- GymLog :: Row Level Security
+-- SyncFit :: Row Level Security
 -- ============================================================================
 -- Rules in one paragraph:
 --   * A user reads and writes only their own workouts and sets.

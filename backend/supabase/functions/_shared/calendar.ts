@@ -165,6 +165,13 @@ export async function fetchEventsInRange(
 // ---------------------------------------------------------------------------
 // Email
 // ---------------------------------------------------------------------------
+//
+// Sent via the Gmail API, as the trainer's own Google account -- the same
+// access token already used to read their calendar (scope
+// https://www.googleapis.com/auth/gmail.send, granted alongside
+// calendar.readonly when they connect). This avoids needing a third-party
+// mail provider or a verified sending domain: Gmail always sends as the
+// authenticated account, so there's no "from" address to configure.
 
 export interface ReminderEmailInput {
   to: string;
@@ -176,8 +183,7 @@ export interface ReminderEmailInput {
 
 export async function sendReminderEmail(
   input: ReminderEmailInput,
-  resendApiKey: string,
-  fromAddress: string,
+  accessToken: string,
 ): Promise<void> {
   const sessionTime = new Date(input.sessionStart).toLocaleString("en-IN", {
     timeZone: TIMEZONE,
@@ -198,25 +204,51 @@ export async function sendReminderEmail(
     <p>See you there!</p>
   `.trim();
 
-  const response = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${resendApiKey}`,
-      "Content-Type": "application/json",
+  const subject = `Reminder: your session tomorrow at ${sessionTime}`;
+  const raw = toGmailRaw(input.to, subject, html);
+
+  const response = await fetch(
+    "https://gmail.googleapis.com/gmail/v1/users/me/messages/send",
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ raw }),
     },
-    body: JSON.stringify({
-      from: fromAddress,
-      to: input.to,
-      subject: `Reminder: your session tomorrow at ${sessionTime}`,
-      html,
-    }),
-  });
+  );
 
   if (!response.ok) {
     throw new Error(
-      `Resend send failed (${response.status}): ${await response.text()}`,
+      `Gmail send failed (${response.status}): ${await response.text()}`,
     );
   }
+}
+
+/** Builds a base64url-encoded RFC 2822 message the Gmail API accepts as-is. */
+function toGmailRaw(to: string, subject: string, html: string): string {
+  const message = [
+    `To: ${to}`,
+    `Subject: =?UTF-8?B?${toBase64(subject)}?=`,
+    "MIME-Version: 1.0",
+    "Content-Type: text/html; charset=UTF-8",
+    "",
+    html,
+  ].join("\r\n");
+
+  return toBase64Url(message);
+}
+
+function toBase64(value: string): string {
+  return btoa(String.fromCharCode(...new TextEncoder().encode(value)));
+}
+
+function toBase64Url(value: string): string {
+  return toBase64(value)
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
 }
 
 function escapeHtml(value: string): string {

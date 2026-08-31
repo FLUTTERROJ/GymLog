@@ -5,6 +5,7 @@ import '../../core/formatting.dart';
 import '../../core/theme.dart';
 import '../../services/auth_service.dart';
 import '../../services/trainer_service.dart';
+import '../help/help_screen.dart';
 import '../../widgets/profile_drawer.dart';
 import 'calendar_settings_screen.dart';
 import 'create_challenge_screen.dart';
@@ -61,6 +62,13 @@ class _TraineesScreenState extends State<TraineesScreen> {
             icon: const Icon(Icons.event_available_outlined),
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const CalendarSettingsScreen()),
+            ),
+          ),
+          IconButton(
+            tooltip: 'How SyncFit works',
+            icon: const Icon(Icons.help_outline),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const HelpScreen()),
             ),
           ),
           IconButton(

@@ -10,14 +10,14 @@
 $ErrorActionPreference = 'Stop'
 
 $project = Split-Path -Parent $PSScriptRoot
-$scaffold = Join-Path ([System.IO.Path]::GetTempPath()) "gymlog_scaffold_$(Get-Random)"
+$scaffold = Join-Path ([System.IO.Path]::GetTempPath()) "syncfit_scaffold_$(Get-Random)"
 
 if (-not (Get-Command flutter -ErrorAction SilentlyContinue)) {
     throw 'flutter was not found on PATH. Install it from https://docs.flutter.dev/get-started/install/windows first.'
 }
 
 Write-Host "Scaffolding platform folders in $scaffold ..." -ForegroundColor Cyan
-flutter create --project-name gymlog --org io.supabase --platforms=android,ios,web $scaffold | Out-Null
+flutter create --project-name syncfit --org io.supabase --platforms=android,ios,web $scaffold | Out-Null
 
 foreach ($folder in @('android', 'ios', 'web')) {
     $source = Join-Path $scaffold $folder

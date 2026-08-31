@@ -16,7 +16,7 @@ class Env {
   ///   * Supabase → Authentication → URL Configuration → Redirect URLs
   ///   * the intent-filter in android/app/src/main/AndroidManifest.xml
   ///   * CFBundleURLSchemes in ios/Runner/Info.plist
-  static const String authRedirectUrl = 'io.supabase.gymlog://login-callback/';
+  static const String authRedirectUrl = 'io.supabase.syncfit://login-callback/';
 
   static bool get isConfigured =>
       supabaseUrl.isNotEmpty && supabaseAnonKey.isNotEmpty;

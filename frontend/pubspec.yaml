@@ -1,4 +1,4 @@
-name: gymlog
+name: syncfit
 description: Log the workout you did today and share it with your trainer.
 publish_to: "none"
 version: 1.0.0+1

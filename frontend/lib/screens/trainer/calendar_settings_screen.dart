@@ -347,7 +347,7 @@ class _ConnectionCard extends StatelessWidget {
             status.connected
                 ? 'Reading sessions from ${status.googleEmail ?? "your Google Calendar"}. '
                     'Trainees with a mapped name get an email the evening before their session.'
-                : 'Connect your Google Calendar so GymLog can email each trainee a '
+                : 'Connect your Google Calendar so SyncFit can email each trainee a '
                     'reminder the evening before their session, based on your '
                     'existing event titles.',
             style: theme.textTheme.bodyMedium

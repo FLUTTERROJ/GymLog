@@ -1,4 +1,4 @@
-package io.supabase.gymlog
+package io.supabase.syncfit
 
 import io.flutter.embedding.android.FlutterActivity
 

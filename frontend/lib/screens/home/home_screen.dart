@@ -9,6 +9,7 @@ import '../../models/workout.dart';
 import '../../services/auth_service.dart';
 import '../../services/workout_service.dart';
 import '../../widgets/exercise_group_card.dart';
+import '../help/help_screen.dart';
 import '../../widgets/profile_drawer.dart';
 import 'add_exercise_screen.dart';
 
@@ -154,8 +155,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
         actions: [
-          _ThemeToggleButton(scaffoldKey: _scaffoldKey),
-          const SizedBox(width: 8),
           IconButton(
             tooltip: 'Open profile',
             icon: const Icon(Icons.menu),

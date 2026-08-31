@@ -14,8 +14,8 @@ import 'services/profile_service.dart';
 import 'services/trainer_service.dart';
 import 'services/theme_service.dart';
 
-class GymLogApp extends StatelessWidget {
-  const GymLogApp({super.key});
+class SyncFitApp extends StatelessWidget {
+  const SyncFitApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -30,10 +30,17 @@ class GymLogApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => CalendarService()),
        ChangeNotifierProvider(create: (_) => ThemeService()),
       ],
+      child: MaterialApp(
+        title: 'SyncFit',
+        debugShowCheckedModeBanner: false,
+        theme: buildTheme(Brightness.light),
+        darkTheme: buildTheme(Brightness.dark),
+        home: const AuthGate(),
+      ),
       child: Builder(builder: (context) {
         final themeSvc = context.watch<ThemeService>();
         return MaterialApp(
-          title: 'GymLog',
+          title: 'SyncFit',
           debugShowCheckedModeBanner: false,
           theme: buildTheme(Brightness.light),
           darkTheme: buildTheme(Brightness.dark),

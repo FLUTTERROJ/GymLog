@@ -18,7 +18,7 @@ Future<void> main() async {
     anonKey: Env.supabaseAnonKey,
   );
 
-  runApp(const GymLogApp());
+  runApp(const SyncFitApp());
 }
 
 /// Shown instead of a bare crash when the app was built without the Supabase
