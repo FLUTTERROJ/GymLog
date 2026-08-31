@@ -20,7 +20,7 @@ class AppProfile {
 
 class TrainerProfile {
   const TrainerProfile(
-      {required this.id, required this.username, this.fullName,});
+    {required this.id, required this.username, this.fullName,});
   final String id;
   final String username;
   final String? fullName;
@@ -54,6 +54,15 @@ class ProfileService extends ChangeNotifier {
       _profile = row == null
           ? null
           : AppProfile.fromMap(Map<String, dynamic>.from(row));
+    } catch (error) {
+      // A stale session left over from a different Supabase project (or an
+      // account that no longer exists) fails right here rather than at
+      // sign-in. Without this, `profile` never becomes non-null and
+      // AuthGate is stuck on its loading spinner forever -- signing out
+      // clears the bad session and drops back to the login screen instead.
+      debugPrint('ProfileService.load: $error');
+      _profile = null;
+      await _client.auth.signOut();
     } finally {
       _loading = false;
       notifyListeners();
@@ -61,7 +70,7 @@ class ProfileService extends ChangeNotifier {
   }
 
   Future<void> completeSetup(
-      {required String username, required String role,}) async {
+    {required String username, required String role,}) async {
     final user = _client.auth.currentUser;
     if (user == null) throw StateError('Not signed in');
     final normalizedUsername = username.trim();
@@ -77,7 +86,7 @@ class ProfileService extends ChangeNotifier {
         await _client.rpc('search_trainers', params: {'p_query': query});
     return (rows as List)
         .map((row) =>
-            TrainerProfile.fromMap(Map<String, dynamic>.from(row as Map)),)
+              TrainerProfile.fromMap(Map<String, dynamic>.from(row as Map)),)
         .toList();
   }
 
