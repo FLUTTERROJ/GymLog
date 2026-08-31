@@ -79,7 +79,7 @@ class MonthlyChallenge {
           trainee is Map ? (trainee['full_name'] as String?) : null,
       exercises: rawExercises
           .map((entry) => ChallengeExercise.fromMap(
-              Map<String, dynamic>.from(entry as Map)))
+              Map<String, dynamic>.from(entry as Map),),)
           .toList(),
       completedExercisesByDate: completionMap,
     );

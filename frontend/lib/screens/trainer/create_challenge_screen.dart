@@ -158,7 +158,7 @@ class _CreateChallengeScreenState extends State<CreateChallengeScreen> {
           const SizedBox(height: 8),
           Text('Challenge title',
               style: theme.textTheme.titleLarge
-                  ?.copyWith(fontWeight: FontWeight.w700)),
+                  ?.copyWith(fontWeight: FontWeight.w700),),
           const SizedBox(height: 12),
           TextField(
             controller: _titleController,
@@ -171,7 +171,7 @@ class _CreateChallengeScreenState extends State<CreateChallengeScreen> {
           const SizedBox(height: 28),
           Text('Assign to trainees',
               style: theme.textTheme.titleLarge
-                  ?.copyWith(fontWeight: FontWeight.w700)),
+                  ?.copyWith(fontWeight: FontWeight.w700),),
           const SizedBox(height: 6),
           Text(
             'Search by username, tap to add. You can add more than one.',
@@ -247,17 +247,17 @@ class _CreateChallengeScreenState extends State<CreateChallengeScreen> {
                           children: [
                             Text(result.label,
                                 style: theme.textTheme.titleMedium
-                                    ?.copyWith(fontWeight: FontWeight.w700)),
+                                    ?.copyWith(fontWeight: FontWeight.w700),),
                             if (result.fullName != null &&
                                 result.fullName!.trim().isNotEmpty)
                               Text(result.fullName!,
                                   style: theme.textTheme.bodyMedium?.copyWith(
-                                      color: theme.colorScheme.outline)),
+                                      color: theme.colorScheme.outline,),),
                           ],
                         ),
                       ),
                       Icon(Icons.add_circle_outline,
-                          color: theme.colorScheme.primary),
+                          color: theme.colorScheme.primary,),
                     ],
                   ),
                 ),
@@ -267,13 +267,13 @@ class _CreateChallengeScreenState extends State<CreateChallengeScreen> {
             const SizedBox(height: 12),
             Text('No matching trainees found.',
                 style: theme.textTheme.bodySmall
-                    ?.copyWith(color: theme.colorScheme.outline)),
+                    ?.copyWith(color: theme.colorScheme.outline),),
           ],
 
           const SizedBox(height: 28),
           Text('Duration',
               style: theme.textTheme.titleLarge
-                  ?.copyWith(fontWeight: FontWeight.w700)),
+                  ?.copyWith(fontWeight: FontWeight.w700),),
           const SizedBox(height: 6),
           Text(
             'When does this challenge run?',
@@ -295,7 +295,7 @@ class _CreateChallengeScreenState extends State<CreateChallengeScreen> {
                       Row(
                         children: [
                           Icon(Icons.event,
-                              color: theme.colorScheme.primary, size: 20),
+                              color: theme.colorScheme.primary, size: 20,),
                           const SizedBox(width: 8),
                           Text('Starts', style: theme.textTheme.labelMedium),
                         ],
@@ -322,7 +322,7 @@ class _CreateChallengeScreenState extends State<CreateChallengeScreen> {
                       Row(
                         children: [
                           Icon(Icons.event_available,
-                              color: theme.colorScheme.primary, size: 20),
+                              color: theme.colorScheme.primary, size: 20,),
                           const SizedBox(width: 8),
                           Text('Ends', style: theme.textTheme.labelMedium),
                         ],
@@ -343,7 +343,7 @@ class _CreateChallengeScreenState extends State<CreateChallengeScreen> {
           const SizedBox(height: 28),
           Text('Exercises',
               style: theme.textTheme.titleLarge
-                  ?.copyWith(fontWeight: FontWeight.w700)),
+                  ?.copyWith(fontWeight: FontWeight.w700),),
           const SizedBox(height: 6),
           Text(
             'Add every exercise in this challenge, then save once.',
@@ -403,7 +403,7 @@ class _CreateChallengeScreenState extends State<CreateChallengeScreen> {
               child: Row(
                 children: [
                   Icon(Icons.error_outline,
-                      size: 20, color: theme.colorScheme.onErrorContainer),
+                      size: 20, color: theme.colorScheme.onErrorContainer,),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
@@ -464,7 +464,7 @@ class _ChallengeExerciseSection extends StatelessWidget {
             children: [
               Expanded(
                 child: Text('Exercise $number',
-                    style: theme.textTheme.labelLarge),
+                    style: theme.textTheme.labelLarge,),
               ),
               if (canRemove)
                 IconButton(
@@ -477,7 +477,7 @@ class _ChallengeExerciseSection extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           DropdownButtonFormField<String>(
-            value: selectedValue,
+            initialValue: selectedValue,
             isExpanded: true,
             decoration: const InputDecoration(
               hintText: 'Choose exercise',
@@ -512,11 +512,11 @@ class _ChallengeExerciseSection extends StatelessWidget {
             children: [
               Text('Sets',
                   style: theme.textTheme.titleSmall
-                      ?.copyWith(fontWeight: FontWeight.w700)),
+                      ?.copyWith(fontWeight: FontWeight.w700),),
               const Spacer(),
               Text('Weight optional',
                   style: theme.textTheme.bodySmall
-                      ?.copyWith(color: theme.colorScheme.outline)),
+                      ?.copyWith(color: theme.colorScheme.outline),),
             ],
           ),
           const SizedBox(height: 10),

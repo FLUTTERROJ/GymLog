@@ -150,7 +150,7 @@ class _WorkoutDayCard extends StatelessWidget {
                 Row(
                   children: [
                     Icon(Icons.sticky_note_2_outlined,
-                        size: 18, color: theme.colorScheme.outline),
+                        size: 18, color: theme.colorScheme.outline,),
                     const SizedBox(width: 8),
                     Text('Notes', style: theme.textTheme.labelLarge),
                   ],

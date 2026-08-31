@@ -176,7 +176,7 @@ class _CalendarSettingsScreenState extends State<CalendarSettingsScreen> {
                 )
               else if (calendar.previewError != null)
                 Text(calendar.previewError!,
-                    style: TextStyle(color: theme.colorScheme.error))
+                    style: TextStyle(color: theme.colorScheme.error),)
               else if (calendar.preview.sessions.isEmpty)
                 Panel(
                   child: Text(
@@ -251,18 +251,18 @@ class _CalendarSettingsScreenState extends State<CalendarSettingsScreen> {
                             children: [
                               Text(name.name,
                                   style: theme.textTheme.titleSmall
-                                      ?.copyWith(fontWeight: FontWeight.w700)),
+                                      ?.copyWith(fontWeight: FontWeight.w700),),
                               if (name.mapped)
                                 Text('Mapped to ${name.traineeLabel ?? "a trainee"}',
                                     style: theme.textTheme.bodySmall?.copyWith(
-                                        color: theme.colorScheme.outline)),
+                                        color: theme.colorScheme.outline,),),
                             ],
                           ),
                         ),
                         if (!name.mapped)
                           Text('Tap to map',
                               style: theme.textTheme.bodySmall
-                                  ?.copyWith(color: theme.colorScheme.primary)),
+                                  ?.copyWith(color: theme.colorScheme.primary),),
                       ],
                     ),
                   ),

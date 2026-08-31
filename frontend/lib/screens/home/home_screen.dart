@@ -155,6 +155,14 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
         actions: [
+          _ThemeToggleButton(scaffoldKey: _scaffoldKey),
+          IconButton(
+            tooltip: 'How SyncFit works',
+            icon: const Icon(Icons.help_outline),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const HelpScreen()),
+            ),
+          ),
           IconButton(
             tooltip: 'Open profile',
             icon: const Icon(Icons.menu),
@@ -220,7 +228,8 @@ class _TrainerChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       child: Row(
         children: [
-          Icon(Icons.fitness_center, size: 18, color: theme.colorScheme.primary),
+          Icon(Icons.fitness_center,
+              size: 18, color: theme.colorScheme.primary,),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
@@ -384,7 +393,7 @@ class _ThemeToggleButton extends StatelessWidget {
         if (v == 'dark') themeSvc.setMode(ThemeMode.dark);
       },
       itemBuilder: (_) => [
-        PopupMenuItem(value: 'system', child: Text('Device')), 
+        PopupMenuItem(value: 'system', child: Text('Device')),
         PopupMenuItem(value: 'light', child: Text('Light')),
         PopupMenuItem(value: 'dark', child: Text('Dark')),
       ],

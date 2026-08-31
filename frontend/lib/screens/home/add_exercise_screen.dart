@@ -55,10 +55,10 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
             draft.sets.add(_SetControllers(
               reps: set.reps.toString(),
               weight: set.weightKg == null ? '' : set.weightKg!.toString(),
-            ));
+            ),);
           }
           return draft;
-        }));
+        }),);
     }
     WidgetsBinding.instance.addPostFrameCallback((_) => _prefillTrainer());
   }
@@ -218,11 +218,12 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
       }
       if (mounted) Navigator.of(context).pop(true);
     } catch (error) {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _saving = false;
           _error = describeError(error);
         });
+      }
     }
   }
 
@@ -254,11 +255,11 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
                   const SizedBox(height: 2),
                   Text(friendlyDate(_date),
                       style: theme.textTheme.titleMedium
-                          ?.copyWith(fontWeight: FontWeight.w600)),
+                          ?.copyWith(fontWeight: FontWeight.w600),),
                 ],
-              )),
+              ),),
               const Icon(Icons.chevron_right),
-            ]),
+            ],),
           ),
           if (_isTrainee) ...[
             const SizedBox(height: 24),
@@ -270,7 +271,7 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
           const SizedBox(height: 24),
           Text('Exercises',
               style: theme.textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w700)),
+                  ?.copyWith(fontWeight: FontWeight.w700),),
           const SizedBox(height: 4),
           Text(
             'Add every exercise in this session, then save once.',
@@ -310,7 +311,7 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
               ? const SizedBox(
                   width: 20,
                   height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2.5))
+                  child: CircularProgressIndicator(strokeWidth: 2.5),)
               : const Icon(Icons.check),
          label: Text(_saving ? 'Saving...' : (_isEditing ? 'Save changes' : 'Save workout')),
         ),
@@ -358,14 +359,14 @@ class _ExerciseSection extends StatelessWidget {
         Row(children: [
           Expanded(
               child:
-                  Text('Exercise $number', style: theme.textTheme.labelLarge)),
+                  Text('Exercise $number', style: theme.textTheme.labelLarge),),
           if (canRemove)
             IconButton(
               onPressed: onRemoveExercise,
               tooltip: 'Remove exercise $number',
               icon: const Icon(Icons.delete_outline),
             ),
-        ]),
+        ],),
         const SizedBox(height: 4),
         OutlinedButton.icon(
           onPressed: onPickExercise,
@@ -379,12 +380,12 @@ class _ExerciseSection extends StatelessWidget {
         Row(children: [
           Text('Sets',
               style: theme.textTheme.titleSmall
-                  ?.copyWith(fontWeight: FontWeight.w700)),
+                  ?.copyWith(fontWeight: FontWeight.w700),),
           const Spacer(),
           Text('Weight optional',
               style: theme.textTheme.bodySmall
-                  ?.copyWith(color: theme.colorScheme.outline)),
-        ]),
+                  ?.copyWith(color: theme.colorScheme.outline),),
+        ],),
         const SizedBox(height: 10),
         for (var index = 0; index < draft.sets.length; index++)
           Padding(
@@ -400,8 +401,8 @@ class _ExerciseSection extends StatelessWidget {
         OutlinedButton.icon(
             onPressed: onAddSet,
             icon: const Icon(Icons.add),
-            label: const Text('Add set')),
-      ]),
+            label: const Text('Add set'),),
+      ],),
     );
   }
 }
@@ -417,14 +418,14 @@ class _ErrorBanner extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
           color: scheme.errorContainer,
-          borderRadius: BorderRadius.circular(12)),
+          borderRadius: BorderRadius.circular(12),),
       child: Row(children: [
         Icon(Icons.error_outline, size: 20, color: scheme.onErrorContainer),
         const SizedBox(width: 10),
         Expanded(
             child:
-                Text(text, style: TextStyle(color: scheme.onErrorContainer))),
-      ]),
+                Text(text, style: TextStyle(color: scheme.onErrorContainer)),),
+      ],),
     );
   }
 }
@@ -466,7 +467,7 @@ class _SetRow extends StatelessWidget {
         width: 34,
         child: Text('${index + 1}',
             style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700, color: theme.colorScheme.outline)),
+                fontWeight: FontWeight.w700, color: theme.colorScheme.outline,),),
       ),
       Expanded(
         flex: 3,
@@ -485,7 +486,7 @@ class _SetRow extends StatelessWidget {
           controller: controllers.weight,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           inputFormatters: [
-            FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'))
+            FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
           ],
           textInputAction: TextInputAction.done,
           onSubmitted: onSubmitted == null ? null : (_) => onSubmitted!(),
@@ -503,6 +504,6 @@ class _SetRow extends StatelessWidget {
               )
             : null,
       ),
-    ]);
+    ],);
   }
 }

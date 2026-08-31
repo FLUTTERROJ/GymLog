@@ -265,7 +265,7 @@ workout_sets (
   }
 
   Future<void> saveNotes(
-      {required DateTime date, required String notes}) async {
+      {required DateTime date, required String notes,}) async {
     final workoutRow = await _client.rpc(
       'get_or_create_workout',
       params: {'p_date': toDateString(date)},
@@ -274,7 +274,7 @@ workout_sets (
 
     final trimmed = notes.trim();
     await _client.from('workouts').update(
-        {'notes': trimmed.isEmpty ? null : trimmed}).eq('id', workoutId);
+        {'notes': trimmed.isEmpty ? null : trimmed},).eq('id', workoutId);
 
     await _refreshAfterWrite();
   }

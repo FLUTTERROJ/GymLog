@@ -28,15 +28,8 @@ class SyncFitApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => TrainerService()),
         ChangeNotifierProvider(create: (_) => ChallengeService()),
         ChangeNotifierProvider(create: (_) => CalendarService()),
-       ChangeNotifierProvider(create: (_) => ThemeService()),
+        ChangeNotifierProvider(create: (_) => ThemeService()),
       ],
-      child: MaterialApp(
-        title: 'SyncFit',
-        debugShowCheckedModeBanner: false,
-        theme: buildTheme(Brightness.light),
-        darkTheme: buildTheme(Brightness.dark),
-        home: const AuthGate(),
-      ),
       child: Builder(builder: (context) {
         final themeSvc = context.watch<ThemeService>();
         return MaterialApp(
@@ -47,7 +40,7 @@ class SyncFitApp extends StatelessWidget {
           themeMode: themeSvc.mode,
           home: const AuthGate(),
         );
-      }),
+      },),
     );
   }
 }

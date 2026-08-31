@@ -33,7 +33,7 @@ class ProfileDrawer extends StatelessWidget {
                               .toUpperCase()
                           : '?',
                       style: theme.textTheme.titleLarge?.copyWith(
-                          color: theme.colorScheme.onPrimary,
+                        color: theme.colorScheme.onPrimary,
                         fontWeight: FontWeight.w700,
                       ),
                     ),

@@ -39,8 +39,9 @@ class ChallengeProfileSearchResult {
 
   String get label {
     if (username != null && username!.trim().isNotEmpty) return username!.trim();
-    if (fullName != null && fullName!.trim().isNotEmpty)
+    if (fullName != null && fullName!.trim().isNotEmpty) {
       return fullName!.trim();
+    }
     return 'User';
   }
 }
@@ -84,7 +85,7 @@ class ChallengeService extends ChangeNotifier {
 
       challenges = (rows as List)
           .map((row) =>
-              MonthlyChallenge.fromMap(Map<String, dynamic>.from(row as Map)))
+              MonthlyChallenge.fromMap(Map<String, dynamic>.from(row as Map)),)
           .toList();
     } catch (error) {
       debugPrint('ChallengeService.loadChallenges: $error');
@@ -96,7 +97,7 @@ class ChallengeService extends ChangeNotifier {
   }
 
   Future<List<ChallengeProfileSearchResult>> searchTrainees(
-      String query) async {
+      String query,) async {
     final trimmed = query.trim();
     if (trimmed.isEmpty) {
       searchResults = const [];
@@ -113,7 +114,7 @@ class ChallengeService extends ChangeNotifier {
 
     final matches = (rows as List)
         .map((row) => ChallengeProfileSearchResult.fromMap(
-            Map<String, dynamic>.from(row as Map)))
+            Map<String, dynamic>.from(row as Map),),)
         .where((user) {
           final haystack = [user.username ?? '', user.fullName ?? '']
               .join(' ')
@@ -156,7 +157,7 @@ class ChallengeService extends ChangeNotifier {
     }
     final validExercises = exercises
         .where((entry) =>
-            entry.name.trim().isNotEmpty && entry.reps > 0 && entry.sets > 0)
+            entry.name.trim().isNotEmpty && entry.reps > 0 && entry.sets > 0,)
         .toList();
     if (validExercises.isEmpty) {
       throw StateError('Add at least one exercise target.');
@@ -216,7 +217,7 @@ class ChallengeService extends ChangeNotifier {
     };
 
     await _client.from('challenge_completions').upsert(payload,
-        onConflict: 'challenge_id,exercise_id,completion_date');
+        onConflict: 'challenge_id,exercise_id,completion_date',);
 
     await loadChallenges();
   }

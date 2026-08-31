@@ -20,7 +20,7 @@ class AppProfile {
 
 class TrainerProfile {
   const TrainerProfile(
-      {required this.id, required this.username, this.fullName});
+      {required this.id, required this.username, this.fullName,});
   final String id;
   final String username;
   final String? fullName;
@@ -61,7 +61,7 @@ class ProfileService extends ChangeNotifier {
   }
 
   Future<void> completeSetup(
-      {required String username, required String role}) async {
+      {required String username, required String role,}) async {
     final user = _client.auth.currentUser;
     if (user == null) throw StateError('Not signed in');
     final normalizedUsername = username.trim();
@@ -77,7 +77,7 @@ class ProfileService extends ChangeNotifier {
         await _client.rpc('search_trainers', params: {'p_query': query});
     return (rows as List)
         .map((row) =>
-            TrainerProfile.fromMap(Map<String, dynamic>.from(row as Map)))
+            TrainerProfile.fromMap(Map<String, dynamic>.from(row as Map)),)
         .toList();
   }
 

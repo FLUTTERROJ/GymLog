@@ -57,21 +57,21 @@ class _AccountSetupScreenState extends State<AccountSetupScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text('Choose how you use SyncFit',
-                      style: Theme.of(context).textTheme.headlineSmall),
+                      style: Theme.of(context).textTheme.headlineSmall,),
                   const SizedBox(height: 8),
                   const Text(
-                      'Your username is how people find and assign you. '),
+                      'Your username is how people find and assign you. ',),
                   const SizedBox(height: 24),
                   SegmentedButton<String>(
                     segments: const [
                       ButtonSegment(
                           value: 'client',
                           icon: Icon(Icons.person_outline),
-                          label: Text('Trainee')),
+                          label: Text('Trainee'),),
                       ButtonSegment(
                           value: 'trainer',
                           icon: Icon(Icons.fitness_center),
-                          label: Text('Trainer')),
+                          label: Text('Trainer'),),
                     ],
                     selected: {_role},
                     onSelectionChanged: (value) =>
@@ -90,12 +90,12 @@ class _AccountSetupScreenState extends State<AccountSetupScreen> {
                     const SizedBox(height: 16),
                     Text(_error!,
                         style: TextStyle(
-                            color: Theme.of(context).colorScheme.error))
+                            color: Theme.of(context).colorScheme.error,),),
                   ],
                   const SizedBox(height: 24),
                   FilledButton(
                       onPressed: _busy ? null : _save,
-                      child: Text(_busy ? 'Saving...' : 'Continue')),
+                      child: Text(_busy ? 'Saving...' : 'Continue'),),
                 ],
               ),
             ),

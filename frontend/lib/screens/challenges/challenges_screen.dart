@@ -41,7 +41,7 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
                     padding: const EdgeInsets.all(32),
                     children: [
                       Icon(Icons.flag_outlined,
-                          size: 58, color: theme.colorScheme.outlineVariant),
+                          size: 58, color: theme.colorScheme.outlineVariant,),
                       const SizedBox(height: 18),
                       Text(
                         'No challenges yet',
@@ -68,7 +68,7 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
                         onTap: () => Navigator.of(context).push(
                           MaterialPageRoute(
                             builder: (_) => MonthlyChallengeDetailScreen(
-                                challenge: challenge),
+                                challenge: challenge,),
                           ),
                         ),
                         child: Column(
@@ -89,10 +89,10 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
                             Row(
                               children: [
                                 Icon(Icons.fitness_center_outlined,
-                                    size: 16, color: theme.colorScheme.primary),
+                                    size: 16, color: theme.colorScheme.primary,),
                                 const SizedBox(width: 6),
                                 Text('${challenge.exercises.length} exercises',
-                                    style: theme.textTheme.bodyMedium),
+                                    style: theme.textTheme.bodyMedium,),
                               ],
                             ),
                           ],
@@ -207,7 +207,7 @@ class _MonthlyChallengeDetailScreenState
                 if (_isFutureDate) ...[
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 12),
+                        horizontal: 14, vertical: 12,),
                     decoration: BoxDecoration(
                       color: theme.colorScheme.secondaryContainer,
                       borderRadius: BorderRadius.circular(12),
@@ -216,14 +216,14 @@ class _MonthlyChallengeDetailScreenState
                       children: [
                         Icon(Icons.lock_outline,
                             size: 18,
-                            color: theme.colorScheme.onSecondaryContainer),
+                            color: theme.colorScheme.onSecondaryContainer,),
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
                             "This day hasn't happened yet, so it can't be "
                             'ticked off until it arrives.',
                             style: TextStyle(
-                                color: theme.colorScheme.onSecondaryContainer),
+                                color: theme.colorScheme.onSecondaryContainer,),
                           ),
                         ),
                       ],
@@ -233,25 +233,25 @@ class _MonthlyChallengeDetailScreenState
                 ],
                 if (challenge.exercises.isEmpty)
                   Text('No exercises assigned yet.',
-                      style: theme.textTheme.bodyMedium)
+                      style: theme.textTheme.bodyMedium,)
                 else ...[
                   for (final exercise in challenge.exercises) ...[
                     Panel(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 10),
+                          horizontal: 12, vertical: 10,),
                       child: CheckboxListTile(
                         value: challenge.isExerciseDone(
-                            exercise.id, _selectedDate),
+                            exercise.id, _selectedDate,),
                         onChanged: _isFutureDate
                             ? null
                             : (value) =>
                                 _toggleExercise(exercise, value == true),
                         title: Text(exercise.name),
                         subtitle: Text(
-                            '${exercise.reps} reps • ${exercise.sets} sets'),
+                            '${exercise.reps} reps • ${exercise.sets} sets',),
                         secondary: _isFutureDate
                             ? Icon(Icons.lock_outline,
-                                color: theme.colorScheme.outline)
+                                color: theme.colorScheme.outline,)
                             : null,
                         controlAffinity: ListTileControlAffinity.leading,
                       ),
@@ -297,11 +297,11 @@ class _MonthlyChallengeDetailScreenState
                               ? theme.colorScheme.primaryContainer
                               : partial
                                   ? theme.colorScheme.secondaryContainer
-                                  : theme.colorScheme.surfaceVariant,
+                                  : theme.colorScheme.surfaceContainerHighest,
                           borderRadius: BorderRadius.circular(12),
                           border: active
                               ? Border.all(
-                                  color: theme.colorScheme.primary, width: 2)
+                                  color: theme.colorScheme.primary, width: 2,)
                               : null,
                         ),
                         padding: const EdgeInsets.all(6),
@@ -309,7 +309,7 @@ class _MonthlyChallengeDetailScreenState
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text('${date.day}',
-                                style: theme.textTheme.labelLarge),
+                                style: theme.textTheme.labelLarge,),
                             const SizedBox(height: 4),
                             Text(
                               total == 0 ? '0' : '$count/$total',
