@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../services/auth_service.dart';
 import '../services/profile_service.dart';
@@ -32,7 +33,8 @@ class ProfileDrawer extends StatelessWidget {
                     onTap: () {
                       Navigator.of(context).pop();
                       Navigator.of(context).push(
-                        MaterialPageRoute(builder: (_) => const ProfileScreen()),
+                        MaterialPageRoute(
+                            builder: (_) => const ProfileScreen()),
                       );
                     },
                   ),
@@ -56,8 +58,66 @@ class ProfileDrawer extends StatelessWidget {
   }
 }
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  bool _deleting = false;
+
+  Future<void> _deleteAccount() async {
+    final theme = Theme.of(context);
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dctx) => AlertDialog(
+        title: const Text('Delete account?'),
+        content: const Text(
+          'This permanently deletes your account and everything logged '
+          'under it — workouts, challenges, calendar connections. This '
+          "can't be undone.",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: theme.colorScheme.error,
+              foregroundColor: theme.colorScheme.onError,
+            ),
+            onPressed: () => Navigator.of(dctx).pop(true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _deleting = true);
+    // Captured before the pop below detaches this screen's own context.
+    final auth = context.read<AuthService>();
+    try {
+      await Supabase.instance.client.functions.invoke('delete-account');
+      if (!mounted) return;
+      // ProfileScreen was pushed on top of the root route -- pop back to it
+      // first so AuthGate's post-sign-out rebuild (LoginScreen) is what the
+      // user actually sees, instead of being left stranded on this screen.
+      Navigator.of(context).popUntil((route) => route.isFirst);
+      await auth.signOut();
+    } catch (error) {
+      if (mounted) {
+        setState(() => _deleting = false);
+        scaffoldMessenger.showSnackBar(
+          SnackBar(content: Text(describeError(error))),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -145,38 +205,17 @@ class ProfileScreen extends StatelessWidget {
               backgroundColor: theme.colorScheme.errorContainer,
               foregroundColor: theme.colorScheme.onErrorContainer,
             ),
-            onPressed: () async {
-              final scaffoldMessenger = ScaffoldMessenger.of(context);
-              final confirmed = await showDialog<bool>(
-                context: context,
-                builder: (dctx) => AlertDialog(
-                  title: const Text('Delete account?'),
-                  content: const Text(
-                    'This will permanently delete your account. This is a placeholder and does not perform deletion.',
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.of(dctx).pop(false),
-                      child: const Text('Cancel'),
+            onPressed: _deleting ? null : _deleteAccount,
+            child: _deleting
+                ? SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.5,
+                      color: theme.colorScheme.onErrorContainer,
                     ),
-                    FilledButton(
-                      onPressed: () => Navigator.of(dctx).pop(true),
-                      child: const Text('Delete'),
-                    ),
-                  ],
-                ),
-              );
-              if (confirmed == true) {
-                scaffoldMessenger.showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      'Delete-account placeholder — not implemented',
-                    ),
-                  ),
-                );
-              }
-            },
-            child: const Text('Delete account'),
+                  )
+                : const Text('Delete account'),
           ),
         ],
       ),

@@ -20,7 +20,8 @@ backend/
     ├── functions/
     │   ├── calendar-preview/           live parse of tomorrow's calendar (called by the app)
     │   ├── calendar-send-reminders/    cron-triggered, sends the actual emails
-    │   └── _shared/                    title parsing, Google/Resend calls, shared by both
+    │   ├── delete-account/             deletes the caller's own auth user (self-service account deletion)
+    │   └── _shared/                    title parsing, Google Calendar/Gmail calls, shared by the two calendar functions
     └── seed.sql                        ~75 starter exercises
 ```
 
@@ -152,6 +153,27 @@ where email = 'client@example.com';
 
 From that point the trainer's account can read that client's `workouts`,
 `workout_sets` and custom `exercises`, and nothing else.
+
+## Account deletion
+
+The app's profile screen has a real "Delete account" button, backed by
+`supabase/functions/delete-account/index.ts`. There's no client-side call for
+a user to delete their own `auth.users` row — that's an admin-only operation
+— so this one Edge Function exists purely to do it on the caller's behalf,
+scoped to their own id (never anyone else's).
+
+Deploy it the same way as the calendar functions (dashboard → Edge Functions
+→ Deploy a new function → paste in `delete-account/index.ts`, name it
+`delete-account`). No extra secrets needed — it only uses `SUPABASE_URL` and
+`SUPABASE_SERVICE_ROLE_KEY`, both auto-injected.
+
+Deleting the `auth.users` row cascades to everything owned by that account —
+`profiles`, `workouts`, `workout_sets`, custom `exercises`, monthly
+challenges, calendar connection/mappings, session reminders — via the
+`ON DELETE CASCADE` foreign keys set up in the migrations. A trainer's
+trainees are unaffected: `profiles.trainer_id` and `workouts.trainer_id` are
+`ON DELETE SET NULL`, so a trainee's own logged history survives their
+trainer's account being deleted.
 
 ## Google Calendar reminders (trainer feature)
 
