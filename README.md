@@ -1,4 +1,4 @@
-# GymLog
+# SyncFit
 
 Log the workout you did today; your trainer reads it.
 

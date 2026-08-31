@@ -8,6 +8,7 @@ import '../../models/workout.dart';
 import '../../services/auth_service.dart';
 import '../../services/workout_service.dart';
 import '../../widgets/exercise_group_card.dart';
+import '../help/help_screen.dart';
 import 'add_exercise_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -148,6 +149,13 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
         actions: [
+          IconButton(
+            tooltip: 'How SyncFit works',
+            icon: const Icon(Icons.help_outline),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const HelpScreen()),
+            ),
+          ),
           IconButton(
             tooltip: 'Sign out',
             icon: const Icon(Icons.logout),

@@ -6,8 +6,8 @@
 //
 // Idempotent by design: session_reminders has a unique (trainer_id,
 // calendar_event_id, trainee_id), and a row's email_sent_at is only set
-// after Resend confirms the send. Running this twice in a day sends nothing
-// twice.
+// after the Gmail API confirms the send. Running this twice in a day sends
+// nothing twice.
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 import {
@@ -41,8 +41,6 @@ Deno.serve(async (req) => {
 
   const googleClientId = Deno.env.get("GOOGLE_CLIENT_ID")!;
   const googleClientSecret = Deno.env.get("GOOGLE_CLIENT_SECRET")!;
-  const resendApiKey = Deno.env.get("RESEND_API_KEY")!;
-  const fromAddress = Deno.env.get("REMINDER_FROM_ADDRESS")!;
 
   const { data: connections, error: connectionsError } = await supabase
     .from("google_calendar_connections")
@@ -68,8 +66,6 @@ Deno.serve(async (req) => {
         refreshToken: connection.refresh_token as string,
         googleClientId,
         googleClientSecret,
-        resendApiKey,
-        fromAddress,
         timeMin,
         timeMax,
       });
@@ -93,8 +89,6 @@ async function processTrainer(args: {
   refreshToken: string;
   googleClientId: string;
   googleClientSecret: string;
-  resendApiKey: string;
-  fromAddress: string;
   timeMin: string;
   timeMax: string;
 }) {
@@ -104,8 +98,6 @@ async function processTrainer(args: {
     refreshToken,
     googleClientId,
     googleClientSecret,
-    resendApiKey,
-    fromAddress,
     timeMin,
     timeMax,
   } = args;
@@ -191,8 +183,7 @@ async function processTrainer(args: {
             location: session.location,
             paidStatus: session.paidStatus,
           },
-          resendApiKey,
-          fromAddress,
+          accessToken,
         );
 
         await supabase.from("session_reminders").upsert(

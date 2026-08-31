@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "io.supabase" "\0"
-            VALUE "FileDescription", "gymlog" "\0"
+            VALUE "FileDescription", "syncfit" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "gymlog" "\0"
+            VALUE "InternalName", "syncfit" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2026 io.supabase. All rights reserved." "\0"
-            VALUE "OriginalFilename", "gymlog.exe" "\0"
-            VALUE "ProductName", "gymlog" "\0"
+            VALUE "OriginalFilename", "syncfit.exe" "\0"
+            VALUE "ProductName", "syncfit" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

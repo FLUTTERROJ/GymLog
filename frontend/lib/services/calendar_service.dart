@@ -173,8 +173,10 @@ class CalendarService extends ChangeNotifier {
     }
   }
 
-  /// Opens Google's consent screen to grant read-only Calendar access on top
-  /// of however the trainer already signed in -- this links a permission, it
+  /// Opens Google's consent screen to grant read-only Calendar access, plus
+  /// permission to send mail as the trainer's own Gmail address (used for
+  /// reminder emails instead of a third-party mail provider) -- on top of
+  /// however the trainer already signed in. This links a permission, it
   /// doesn't change their login method, so `linkIdentity` (not
   /// `signInWithOAuth`) is the right call here.
   ///
@@ -211,7 +213,8 @@ class CalendarService extends ChangeNotifier {
       await _client.auth.linkIdentity(
         OAuthProvider.google,
         redirectTo: kIsWeb ? null : Env.authRedirectUrl,
-        scopes: 'https://www.googleapis.com/auth/calendar.readonly',
+        scopes: 'https://www.googleapis.com/auth/calendar.readonly '
+            'https://www.googleapis.com/auth/gmail.send',
         queryParams: const {'access_type': 'offline', 'prompt': 'consent'},
       );
       // The browser round-trip finishes asynchronously; give the listener a
@@ -229,7 +232,7 @@ class CalendarService extends ChangeNotifier {
   }
 
   /// Removes the app's stored access -- the Google account may still show
-  /// GymLog under "linked apps" until revoked there too, but calendar-sync
+  /// SyncFit under "linked apps" until revoked there too, but calendar-sync
   /// stops using it immediately either way.
   Future<void> disconnect() async {
     await _client.from('google_calendar_connections').delete().eq('trainer_id', _uid);

@@ -1,4 +1,4 @@
-# GymLog — Frontend (Flutter)
+# SyncFit — Frontend (Flutter)
 
 ```
 frontend/
@@ -74,7 +74,7 @@ in `backend/README.md`. On this side, register the URL scheme:
     <action android:name="android.intent.action.VIEW" />
     <category android:name="android.intent.category.DEFAULT" />
     <category android:name="android.intent.category.BROWSABLE" />
-    <data android:scheme="io.supabase.gymlog" android:host="login-callback" />
+    <data android:scheme="io.supabase.syncfit" android:host="login-callback" />
 </intent-filter>
 ```
 
@@ -88,7 +88,7 @@ in `backend/README.md`. On this side, register the URL scheme:
     <string>Editor</string>
     <key>CFBundleURLSchemes</key>
     <array>
-      <string>io.supabase.gymlog</string>
+      <string>io.supabase.syncfit</string>
     </array>
   </dict>
 </array>

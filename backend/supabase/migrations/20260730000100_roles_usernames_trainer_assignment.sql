@@ -1,4 +1,4 @@
--- GymLog :: account roles, unique usernames, and per-workout trainer access.
+-- SyncFit :: account roles, unique usernames, and per-workout trainer access.
 
 alter table public.profiles
   add column if not exists username text;

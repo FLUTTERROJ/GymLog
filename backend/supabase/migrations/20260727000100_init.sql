@@ -1,5 +1,5 @@
 -- ============================================================================
--- GymLog :: core schema
+-- SyncFit :: core schema
 -- ============================================================================
 -- Entities:
 --   profiles      1:1 with auth.users, carries the client -> trainer link

@@ -1,4 +1,4 @@
--- GymLog :: Google Calendar -> automatic trainee reminders.
+-- SyncFit :: Google Calendar -> automatic trainee reminders.
 --
 -- A trainer connects their Google Calendar once. A scheduled Edge Function
 -- reads tomorrow's events, parses each title as "Name(s) : Paid/Unpaid :

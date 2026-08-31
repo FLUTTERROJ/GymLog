@@ -56,7 +56,7 @@ class _AccountSetupScreenState extends State<AccountSetupScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text('Choose how you use GymLog',
+                  Text('Choose how you use SyncFit',
                       style: Theme.of(context).textTheme.headlineSmall),
                   const SizedBox(height: 8),
                   const Text(

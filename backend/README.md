@@ -1,4 +1,4 @@
-# GymLog — Backend
+# SyncFit — Backend
 
 Supabase *is* the backend. There is no separate API server: the Flutter app talks
 to Supabase over HTTPS, and **Row Level Security** is what enforces "you only see
@@ -130,7 +130,7 @@ https://YOUR_PROJECT_REF.supabase.co/auth/v1/callback
 so Google can hand the session back to the installed app:
 
 ```
-io.supabase.gymlog://login-callback/
+io.supabase.syncfit://login-callback/
 ```
 
 Add `http://localhost:3000` too if you plan to run the Flutter web build.
@@ -158,7 +158,9 @@ From that point the trainer's account can read that client's `workouts`,
 A trainer connects their Google Calendar once; a scheduled Edge Function reads
 tomorrow's events, parses each title as `Name(s) : Paid/Unpaid : Location`,
 resolves each name against a mapping the trainer sets up once per trainee, and
-emails a reminder via Resend the evening before. See
+emails a reminder via the trainer's own Gmail account the evening before — no
+third-party mail provider or verified domain needed, since Gmail always sends
+as the authenticated account. See
 `supabase/migrations/20260817000100_calendar_reminders.sql` for the schema and
 `supabase/functions/` for the two Edge Functions (`calendar-preview`, called
 live by the app; `calendar-send-reminders`, cron-triggered).
@@ -173,12 +175,14 @@ Same as any other migration — SQL editor, run
 
 ### 2. Google Cloud Console (same project as Google sign-in)
 
-1. **APIs & Services → Library** → enable the **Google Calendar API**.
-2. **APIs & Services → OAuth consent screen → Data Access** → add scope
-   `https://www.googleapis.com/auth/calendar.readonly`.
-3. Because that's a "sensitive" scope, the consent screen has to either be
-   fully verified by Google (overkill for one trainer) or stay in **Testing**
-   mode with explicit test users — under **Audience**, add the trainer's own
+1. **APIs & Services → Library** → enable both the **Google Calendar API**
+   and the **Gmail API**.
+2. **APIs & Services → OAuth consent screen → Data Access** → add both scopes:
+   `https://www.googleapis.com/auth/calendar.readonly` and
+   `https://www.googleapis.com/auth/gmail.send`.
+3. Both are "sensitive" scopes, so the consent screen has to either be fully
+   verified by Google (overkill for one trainer) or stay in **Testing** mode
+   with explicit test users — under **Audience**, add the trainer's own
    Google account as a test user. Testing mode caps you at 100 test users,
    which is plenty here.
 4. You already have a Google OAuth client ID/secret from setting up Google
@@ -186,18 +190,7 @@ Same as any other migration — SQL editor, run
    same values as Edge Function secrets below, no new Google OAuth client
    needed.
 
-### 3. Resend (or another transactional email provider)
-
-1. Sign up at [resend.com](https://resend.com), grab an API key.
-2. **Verify a sending domain.** The sandbox address (`onboarding@resend.dev`)
-   only delivers to your own account email — sending real reminders to
-   trainees requires a verified domain with the DNS records Resend gives you.
-   If you don't have a domain to verify, this blocks real sends until you get
-   one.
-3. Once verified, decide the "from" address (e.g. `reminders@yourdomain.com`)
-   — this becomes the `REMINDER_FROM_ADDRESS` secret below.
-
-### 4. Supabase secrets
+### 3. Supabase secrets
 
 **Edge Functions → Secrets** in the dashboard (no CLI needed):
 
@@ -205,14 +198,14 @@ Same as any other migration — SQL editor, run
 |---|---|
 | `GOOGLE_CLIENT_ID` | Same as the Google sign-in provider |
 | `GOOGLE_CLIENT_SECRET` | Same as the Google sign-in provider |
-| `RESEND_API_KEY` | From Resend |
-| `REMINDER_FROM_ADDRESS` | Your verified Resend "from" address |
 | `CRON_SECRET` | Any random string you generate — this is the shared secret that stops random requests from triggering `calendar-send-reminders` and emailing everyone |
 
 `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` don't need setting — every Edge
-Function gets those two injected automatically.
+Function gets those two injected automatically. No mail-provider secrets are
+needed at all — reminders send through the trainer's own Gmail account using
+the same Google access token already used to read their calendar.
 
-### 5. Deploy the two functions
+### 4. Deploy the two functions
 
 **Edge Functions** in the dashboard → **Deploy a new function** → paste in
 the contents of `supabase/functions/calendar-preview/index.ts`, name it
@@ -223,13 +216,13 @@ contents directly into each `index.ts` instead of importing them (functionally
 identical, just less DRY). The CLI (`supabase functions deploy`) handles the
 shared-file structure as-is if you'd rather use that.
 
-### 6. Schedule the daily send
+### 5. Schedule the daily send
 
 **Database → Cron Jobs** → new job → HTTP request:
 
 - **URL**: `https://YOUR_PROJECT_REF.functions.supabase.co/calendar-send-reminders`
 - **Method**: POST
-- **Headers**: `X-Cron-Secret: <the CRON_SECRET value from step 4>`
+- **Headers**: `X-Cron-Secret: <the CRON_SECRET value from step 3>`
 - **Schedule**: `30 12 * * *` (6:00pm IST, i.e. the evening before each
   session) — adjust as you like.
 
@@ -250,12 +243,13 @@ select cron.schedule(
 );
 ```
 
-### 7. Trainer-side setup, in the app
+### 6. Trainer-side setup, in the app
 
 Open the calendar icon on the trainees screen → **Connect Google Calendar** →
-approve the consent screen. Then, for each name that shows up under "Names
-from your calendar," tap it and pick which trainee it refers to — one-time
-per name, reused automatically after that.
+approve the consent screen (this now grants both calendar read access and
+permission to send mail as that Google account). Then, for each name that
+shows up under "Names from your calendar," tap it and pick which trainee it
+refers to — one-time per name, reused automatically after that.
 
 ### Testing before relying on it
 
