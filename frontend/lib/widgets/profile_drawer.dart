@@ -14,12 +14,47 @@ class ProfileDrawer extends StatelessWidget {
     final profile = context.watch<ProfileService>().profile;
     final theme = Theme.of(context);
 
+    final initial = (profile?.username ?? auth.displayName).trim().isNotEmpty
+        ? (profile?.username ?? auth.displayName)
+            .trim()
+            .substring(0, 1)
+            .toUpperCase()
+        : '?';
+
     return Drawer(
       child: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 20,
+                    backgroundColor: theme.colorScheme.primary,
+                    child: Text(
+                      initial,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: theme.colorScheme.onPrimary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      auth.displayName,
+                      style: theme.textTheme.titleSmall
+                          ?.copyWith(fontWeight: FontWeight.w700),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
             const Divider(),
             Expanded(
               child: ListView(
