@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../core/env.dart';
+
 class AppProfile {
   const AppProfile({required this.id, this.username, required this.role});
 
@@ -19,8 +21,11 @@ class AppProfile {
 }
 
 class TrainerProfile {
-  const TrainerProfile(
-    {required this.id, required this.username, this.fullName,});
+  const TrainerProfile({
+    required this.id,
+    required this.username,
+    this.fullName,
+  });
   final String id;
   final String username;
   final String? fullName;
@@ -50,27 +55,36 @@ class ProfileService extends ChangeNotifier {
           .from('profiles')
           .select('id, username, role')
           .eq('id', user.id)
-          .maybeSingle();
+          .maybeSingle()
+          .timeout(Env.networkTimeout);
       _profile = row == null
           ? null
           : AppProfile.fromMap(Map<String, dynamic>.from(row));
     } catch (error) {
       // A stale session left over from a different Supabase project (or an
       // account that no longer exists) fails right here rather than at
-      // sign-in. Without this, `profile` never becomes non-null and
+      // sign-in -- as does a connection that just hangs, now that this is
+      // time-bounded. Without this, `profile` never becomes non-null and
       // AuthGate is stuck on its loading spinner forever -- signing out
       // clears the bad session and drops back to the login screen instead.
       debugPrint('ProfileService.load: $error');
       _profile = null;
-      await _client.auth.signOut();
+      // signOut() clears local session state synchronously before it makes
+      // its own (separately unbounded) network call -- bounding it here just
+      // stops that trailing call from leaving this future pending forever.
+      await _client.auth.signOut().timeout(Env.networkTimeout).catchError(
+            (_) {},
+          );
     } finally {
       _loading = false;
       notifyListeners();
     }
   }
 
-  Future<void> completeSetup(
-    {required String username, required String role,}) async {
+  Future<void> completeSetup({
+    required String username,
+    required String role,
+  }) async {
     final user = _client.auth.currentUser;
     if (user == null) throw StateError('Not signed in');
     final normalizedUsername = username.trim();
@@ -85,8 +99,10 @@ class ProfileService extends ChangeNotifier {
     final rows =
         await _client.rpc('search_trainers', params: {'p_query': query});
     return (rows as List)
-        .map((row) =>
-              TrainerProfile.fromMap(Map<String, dynamic>.from(row as Map)),)
+        .map(
+          (row) =>
+              TrainerProfile.fromMap(Map<String, dynamic>.from(row as Map)),
+        )
         .toList();
   }
 

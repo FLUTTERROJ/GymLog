@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../core/env.dart';
 import '../core/formatting.dart';
 import '../models/exercise.dart';
 import '../models/workout.dart';
@@ -81,7 +82,8 @@ workout_sets (
           .select(_withSets)
           .eq('user_id', _userId)
           .eq('workout_date', toDateString(today()))
-          .maybeSingle();
+          .maybeSingle()
+          .timeout(Env.networkTimeout);
 
       _today =
           row == null ? null : Workout.fromMap(Map<String, dynamic>.from(row));
@@ -107,7 +109,8 @@ workout_sets (
           .select(_withSets)
           .eq('user_id', _userId)
           .order('workout_date', ascending: false)
-          .limit(limit);
+          .limit(limit)
+          .timeout(Env.networkTimeout);
 
       _history = rows
           .map((row) => Workout.fromMap(Map<String, dynamic>.from(row)))
@@ -264,8 +267,10 @@ workout_sets (
     await _refreshAfterWrite();
   }
 
-  Future<void> saveNotes(
-      {required DateTime date, required String notes,}) async {
+  Future<void> saveNotes({
+    required DateTime date,
+    required String notes,
+  }) async {
     final workoutRow = await _client.rpc(
       'get_or_create_workout',
       params: {'p_date': toDateString(date)},
@@ -274,7 +279,8 @@ workout_sets (
 
     final trimmed = notes.trim();
     await _client.from('workouts').update(
-        {'notes': trimmed.isEmpty ? null : trimmed},).eq('id', workoutId);
+      {'notes': trimmed.isEmpty ? null : trimmed},
+    ).eq('id', workoutId);
 
     await _refreshAfterWrite();
   }

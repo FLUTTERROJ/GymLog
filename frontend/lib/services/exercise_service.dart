@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../core/env.dart';
 import '../models/exercise.dart';
 
 /// Backs the searchable exercise dropdown.
@@ -32,7 +33,8 @@ class ExerciseService extends ChangeNotifier {
       final rows = await _client
           .from('exercises')
           .select('id, name, muscle_group, is_global')
-          .order('name');
+          .order('name')
+          .timeout(Env.networkTimeout);
 
       _exercises = rows
           .map((row) => Exercise.fromMap(Map<String, dynamic>.from(row)))

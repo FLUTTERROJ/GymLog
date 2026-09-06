@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -9,11 +10,44 @@ import '../core/env.dart';
 /// [ChangeNotifier], so the widget tree can rebuild on sign in / sign out.
 class AuthService extends ChangeNotifier {
   AuthService() {
-    _session = _client.auth.currentSession;
+    final restored = _client.auth.currentSession;
+    if (restored != null && !_matchesConfiguredProject(restored)) {
+      // A session persisted by a *different* Supabase project (e.g. left
+      // over from before switching projects) can never be refreshed
+      // successfully here -- the access token's issuer says so directly, so
+      // there's no need to make a network call and wait to find that out.
+      // Clearing it now means it can't cause a stuck sign-in attempt later.
+      _session = null;
+      unawaited(
+        _client.auth.signOut().timeout(Env.networkTimeout).catchError((_) {}),
+      );
+    } else {
+      _session = restored;
+    }
     _sub = _client.auth.onAuthStateChange.listen((state) {
       _session = state.session;
       notifyListeners();
     });
+  }
+
+  /// Compares the access token's `iss` claim against the currently
+  /// configured Supabase project -- no signature check, since this is only
+  /// ever used to decide whether to *discard* a session, never to trust one.
+  /// Anything unreadable is treated as "can't tell" rather than "mismatch",
+  /// so a decoding quirk never signs out a session that would've been fine.
+  bool _matchesConfiguredProject(Session session) {
+    try {
+      final parts = session.accessToken.split('.');
+      if (parts.length != 3) return true;
+      final payload = jsonDecode(
+        utf8.decode(base64Url.decode(base64Url.normalize(parts[1]))),
+      ) as Map<String, dynamic>;
+      final issuer = payload['iss'] as String?;
+      if (issuer == null) return true;
+      return Uri.parse(issuer).host == Uri.parse(Env.supabaseUrl).host;
+    } catch (_) {
+      return true;
+    }
   }
 
   final SupabaseClient _client = Supabase.instance.client;
