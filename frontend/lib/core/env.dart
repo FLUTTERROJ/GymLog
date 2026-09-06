@@ -22,7 +22,7 @@ class Env {
   /// Applied to network calls that could otherwise hang forever on a stuck
   /// connection (a stale session that can't be validated, a dead network
   /// path, etc.) with no way for the user to recover short of force-quitting.
-  static const Duration networkTimeout = Duration(seconds: 12);
+  static const Duration networkTimeout = Duration(seconds: 5);
 
   static bool get isConfigured =>
       supabaseUrl.isNotEmpty && supabaseAnonKey.isNotEmpty;
