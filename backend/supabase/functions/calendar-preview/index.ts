@@ -32,7 +32,7 @@ interface ParsedSession {
  */
 function parseSessionTitle(rawTitle: string): ParsedSession | null {
   const parts = rawTitle
-    .split(" : ")
+    .split(/\s*:\s*/)
     .map((p) => p.trim())
     .filter((p) => p.length > 0);
 

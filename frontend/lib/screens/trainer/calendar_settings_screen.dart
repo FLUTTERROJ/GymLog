@@ -13,8 +13,7 @@ class CalendarSettingsScreen extends StatefulWidget {
   const CalendarSettingsScreen({super.key});
 
   @override
-  State<CalendarSettingsScreen> createState() =>
-      _CalendarSettingsScreenState();
+  State<CalendarSettingsScreen> createState() => _CalendarSettingsScreenState();
 }
 
 class _CalendarSettingsScreenState extends State<CalendarSettingsScreen> {
@@ -22,11 +21,15 @@ class _CalendarSettingsScreenState extends State<CalendarSettingsScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final calendar = context.read<CalendarService>();
-      calendar.loadStatus();
-      calendar.loadMappings();
-      if (calendar.status.connected) calendar.fetchPreview();
+      _loadCalendar();
     });
+  }
+
+  Future<void> _loadCalendar() async {
+    final calendar = context.read<CalendarService>();
+    await calendar.loadStatus();
+    await calendar.loadMappings();
+    if (calendar.status.connected) await calendar.fetchPreview();
   }
 
   Future<void> _connect() async {
@@ -93,7 +96,9 @@ class _CalendarSettingsScreenState extends State<CalendarSettingsScreen> {
               padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
               child: Text(
                 'Who is "$calendarName"?',
-                style: Theme.of(sheetContext).textTheme.titleMedium
+                style: Theme.of(sheetContext)
+                    .textTheme
+                    .titleMedium
                     ?.copyWith(fontWeight: FontWeight.w700),
               ),
             ),
@@ -156,8 +161,8 @@ class _CalendarSettingsScreenState extends State<CalendarSettingsScreen> {
               const SizedBox(height: 24),
               Text(
                 "Tomorrow's sessions",
-                style:
-                    theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                style: theme.textTheme.titleMedium
+                    ?.copyWith(fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: 6),
               Text(
@@ -175,8 +180,10 @@ class _CalendarSettingsScreenState extends State<CalendarSettingsScreen> {
                   ),
                 )
               else if (calendar.previewError != null)
-                Text(calendar.previewError!,
-                    style: TextStyle(color: theme.colorScheme.error),)
+                Text(
+                  calendar.previewError!,
+                  style: TextStyle(color: theme.colorScheme.error),
+                )
               else if (calendar.preview.sessions.isEmpty)
                 Panel(
                   child: Text(
@@ -193,12 +200,14 @@ class _CalendarSettingsScreenState extends State<CalendarSettingsScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          DateFormat('EEE, d MMM · h:mm a').format(session.start),
+                          DateFormat('EEE, d MMM · h:mm a')
+                              .format(session.start),
                           style: theme.textTheme.titleSmall
                               ?.copyWith(fontWeight: FontWeight.w700),
                         ),
                         const SizedBox(height: 4),
-                        Text('${session.names.join(", ")} · ${session.paidStatus} · '
+                        Text(
+                            '${session.names.join(", ")} · ${session.paidStatus} · '
                             '${session.location}'),
                       ],
                     ),
@@ -208,8 +217,8 @@ class _CalendarSettingsScreenState extends State<CalendarSettingsScreen> {
               const SizedBox(height: 24),
               Text(
                 'Names from your calendar',
-                style:
-                    theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                style: theme.textTheme.titleMedium
+                    ?.copyWith(fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: 6),
               Text(
@@ -231,15 +240,13 @@ class _CalendarSettingsScreenState extends State<CalendarSettingsScreen> {
               else
                 for (final name in calendar.preview.names) ...[
                   Panel(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
                     onTap: name.mapped ? null : () => _mapName(name.name),
                     child: Row(
                       children: [
                         Icon(
-                          name.mapped
-                              ? Icons.check_circle
-                              : Icons.help_outline,
+                          name.mapped ? Icons.check_circle : Icons.help_outline,
                           color: name.mapped
                               ? theme.colorScheme.primary
                               : theme.colorScheme.outline,
@@ -249,20 +256,27 @@ class _CalendarSettingsScreenState extends State<CalendarSettingsScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(name.name,
-                                  style: theme.textTheme.titleSmall
-                                      ?.copyWith(fontWeight: FontWeight.w700),),
+                              Text(
+                                name.name,
+                                style: theme.textTheme.titleSmall
+                                    ?.copyWith(fontWeight: FontWeight.w700),
+                              ),
                               if (name.mapped)
-                                Text('Mapped to ${name.traineeLabel ?? "a trainee"}',
-                                    style: theme.textTheme.bodySmall?.copyWith(
-                                        color: theme.colorScheme.outline,),),
+                                Text(
+                                  'Mapped to ${name.traineeLabel ?? "a trainee"}',
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: theme.colorScheme.outline,
+                                  ),
+                                ),
                             ],
                           ),
                         ),
                         if (!name.mapped)
-                          Text('Tap to map',
-                              style: theme.textTheme.bodySmall
-                                  ?.copyWith(color: theme.colorScheme.primary),),
+                          Text(
+                            'Tap to map',
+                            style: theme.textTheme.bodySmall
+                                ?.copyWith(color: theme.colorScheme.primary),
+                          ),
                       ],
                     ),
                   ),
@@ -371,7 +385,8 @@ class _ConnectionCard extends StatelessWidget {
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : const Icon(Icons.link),
-                    label: Text(busy ? 'Connecting…' : 'Connect Google Calendar'),
+                    label:
+                        Text(busy ? 'Connecting…' : 'Connect Google Calendar'),
                   ),
           ),
         ],
