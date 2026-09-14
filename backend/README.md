@@ -207,7 +207,16 @@ Same as any other migration — SQL editor, run
    with explicit test users — under **Audience**, add the trainer's own
    Google account as a test user. Testing mode caps you at 100 test users,
    which is plenty here.
-4. You already have a Google OAuth client ID/secret from setting up Google
+4. Add this callback URL to the Web OAuth client's authorized redirect URIs:
+
+   ```
+   https://YOUR_PROJECT_REF.functions.supabase.co/functions/v1/calendar-oauth-callback
+   ```
+
+   This is a separate authorization flow from Supabase identity linking.
+   It requests additional Calendar/Gmail permissions without trying to link
+   the Google identity a second time.
+5. You already have a Google OAuth client ID/secret from setting up Google
    sign-in (`Authentication → Providers → Google` in Supabase) — reuse those
    same values as Edge Function secrets below, no new Google OAuth client
    needed.
@@ -227,9 +236,12 @@ Function gets those two injected automatically. No mail-provider secrets are
 needed at all — reminders send through the trainer's own Gmail account using
 the same Google access token already used to read their calendar.
 
-### 4. Deploy the two functions
+### 4. Deploy the functions
 
-**Edge Functions** in the dashboard → **Deploy a new function** → paste in
+First apply the `20260914000200_calendar_oauth_states.sql` migration. Then
+deploy `calendar-authorize` and `calendar-oauth-callback` in addition to the
+existing calendar functions. **Edge Functions** in the dashboard → **Deploy a
+new function** → paste in
 the contents of `supabase/functions/calendar-preview/index.ts`, name it
 `calendar-preview`. Repeat for `calendar-send-reminders`. Both import from
 `../_shared/calendar.ts` and `../_shared/cors.ts` — if the dashboard editor
@@ -237,6 +249,16 @@ doesn't let you add extra files to a function, inline those two shared files'
 contents directly into each `index.ts` instead of importing them (functionally
 identical, just less DRY). The CLI (`supabase functions deploy`) handles the
 shared-file structure as-is if you'd rather use that.
+
+The OAuth callback must be deployed with JWT verification disabled because
+Google, not the trainer's browser session, calls it:
+
+```toml
+[functions.calendar-oauth-callback]
+verify_jwt = false
+```
+
+This setting is included in `supabase/config.toml`.
 
 ### 5. Schedule the daily send
 

@@ -1,7 +1,6 @@
-import 'dart:async';
-
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../core/env.dart';
 
@@ -93,15 +92,18 @@ class CalendarPreview {
   final List<PreviewSession> sessions;
   final List<PreviewName> names;
 
-  static const empty = CalendarPreview(connected: false, sessions: [], names: []);
+  static const empty =
+      CalendarPreview(connected: false, sessions: [], names: []);
 
   factory CalendarPreview.fromMap(Map<String, dynamic> map) => CalendarPreview(
         connected: map['connected'] as bool? ?? false,
         sessions: ((map['sessions'] as List?) ?? const [])
-            .map((e) => PreviewSession.fromMap(Map<String, dynamic>.from(e as Map)))
+            .map((e) =>
+                PreviewSession.fromMap(Map<String, dynamic>.from(e as Map)))
             .toList(),
         names: ((map['names'] as List?) ?? const [])
-            .map((e) => PreviewName.fromMap(Map<String, dynamic>.from(e as Map)))
+            .map(
+                (e) => PreviewName.fromMap(Map<String, dynamic>.from(e as Map)))
             .toList(),
       );
 }
@@ -135,7 +137,6 @@ class CalendarMapping {
 
 class CalendarService extends ChangeNotifier {
   final SupabaseClient _client = Supabase.instance.client;
-  StreamSubscription<AuthState>? _linkSub;
 
   CalendarConnectionStatus status = CalendarConnectionStatus.disconnected;
   bool loadingStatus = false;
@@ -173,59 +174,24 @@ class CalendarService extends ChangeNotifier {
     }
   }
 
-  /// Opens Google's consent screen to grant read-only Calendar access, plus
-  /// permission to send mail as the trainer's own Gmail address (used for
-  /// reminder emails instead of a third-party mail provider) -- on top of
-  /// however the trainer already signed in. This links a permission, it
-  /// doesn't change their login method, so `linkIdentity` (not
-  /// `signInWithOAuth`) is the right call here.
-  ///
-  /// Supabase does not persist `session.providerRefreshToken` across app
-  /// restarts -- it's only present on the auth-state event fired right after
-  /// this redirect completes. This listens for that one moment and pushes it
-  /// straight into `google_calendar_connections`; if that write is missed,
-  /// the token is gone and the trainer has to reconnect.
+  /// Opens a separate Google consent screen for Calendar/Gmail permissions.
+  /// This deliberately does not use Supabase identity linking: Google is
+  /// commonly already the trainer's SyncFit login identity.
   Future<void> connect() async {
     _connecting = true;
     notifyListeners();
 
-    final completer = Completer<void>();
-    _linkSub?.cancel();
-    _linkSub = _client.auth.onAuthStateChange.listen((state) async {
-      final refreshToken = state.session?.providerRefreshToken;
-      if (refreshToken == null) return;
-
-      try {
-        await _client.from('google_calendar_connections').upsert({
-          'trainer_id': _uid,
-          'refresh_token': refreshToken,
-          'google_email': state.session?.user.email,
-        });
-        await loadStatus();
-      } catch (error) {
-        debugPrint('CalendarService: failed to store refresh token: $error');
-      } finally {
-        if (!completer.isCompleted) completer.complete();
-      }
-    });
-
     try {
-      await _client.auth.linkIdentity(
-        OAuthProvider.google,
-        redirectTo: kIsWeb ? null : Env.authRedirectUrl,
-        scopes: 'https://www.googleapis.com/auth/calendar.readonly '
-            'https://www.googleapis.com/auth/gmail.send',
-        queryParams: const {'access_type': 'offline', 'prompt': 'consent'},
+      final redirectTo = kIsWeb ? Uri.base.origin : Env.authRedirectUrl;
+      final response = await _client.functions.invoke(
+        'calendar-authorize',
+        body: {'redirect_to': redirectTo},
       );
-      // The browser round-trip finishes asynchronously; give the listener a
-      // window to catch the resulting auth-state event before giving up.
-      await completer.future.timeout(
-        const Duration(minutes: 5),
-        onTimeout: () {},
-      );
+      final url = (response.data as Map)['url'] as String?;
+      if (url == null || !await launchUrl(Uri.parse(url))) {
+        throw StateError('Could not open Google authorization.');
+      }
     } finally {
-      await _linkSub?.cancel();
-      _linkSub = null;
       _connecting = false;
       notifyListeners();
     }
@@ -235,7 +201,10 @@ class CalendarService extends ChangeNotifier {
   /// SyncFit under "linked apps" until revoked there too, but calendar-sync
   /// stops using it immediately either way.
   Future<void> disconnect() async {
-    await _client.from('google_calendar_connections').delete().eq('trainer_id', _uid);
+    await _client
+        .from('google_calendar_connections')
+        .delete()
+        .eq('trainer_id', _uid);
     status = CalendarConnectionStatus.disconnected;
     notifyListeners();
   }
@@ -252,7 +221,8 @@ class CalendarService extends ChangeNotifier {
           .eq('trainer_id', _uid)
           .order('calendar_name');
       mappings = (rows as List)
-          .map((row) => CalendarMapping.fromMap(Map<String, dynamic>.from(row as Map)))
+          .map((row) =>
+              CalendarMapping.fromMap(Map<String, dynamic>.from(row as Map)))
           .toList();
     } catch (error) {
       debugPrint('CalendarService.loadMappings: $error');
@@ -288,7 +258,8 @@ class CalendarService extends ChangeNotifier {
     notifyListeners();
     try {
       final response = await _client.functions.invoke('calendar-preview');
-      preview = CalendarPreview.fromMap(Map<String, dynamic>.from(response.data as Map));
+      preview = CalendarPreview.fromMap(
+          Map<String, dynamic>.from(response.data as Map));
     } catch (error) {
       previewError = "Couldn't read your calendar. Try again in a moment.";
       debugPrint('CalendarService.fetchPreview: $error');
@@ -303,11 +274,5 @@ class CalendarService extends ChangeNotifier {
     mappings = const [];
     preview = CalendarPreview.empty;
     notifyListeners();
-  }
-
-  @override
-  void dispose() {
-    _linkSub?.cancel();
-    super.dispose();
   }
 }
