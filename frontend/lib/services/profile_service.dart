@@ -47,6 +47,9 @@ class ProfileService extends ChangeNotifier {
 
   Future<void> load() async {
     final user = _client.auth.currentUser;
+    debugPrint(
+      'ProfileService.load: called, user=${user?.id} loading=$_loading',
+    );
     if (user == null || _loading) return;
     _loading = true;
     notifyListeners();
@@ -107,6 +110,7 @@ class ProfileService extends ChangeNotifier {
   }
 
   void clear() {
+    debugPrint('ProfileService.clear: called (was loading=$_loading)');
     _profile = null;
     _loading = false;
     notifyListeners();

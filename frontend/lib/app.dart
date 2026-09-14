@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -30,17 +31,19 @@ class SyncFitApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => CalendarService()),
         ChangeNotifierProvider(create: (_) => ThemeService()),
       ],
-      child: Builder(builder: (context) {
-        final themeSvc = context.watch<ThemeService>();
-        return MaterialApp(
-          title: 'SyncFit',
-          debugShowCheckedModeBanner: false,
-          theme: buildTheme(Brightness.light),
-          darkTheme: buildTheme(Brightness.dark),
-          themeMode: themeSvc.mode,
-          home: const AuthGate(),
-        );
-      },),
+      child: Builder(
+        builder: (context) {
+          final themeSvc = context.watch<ThemeService>();
+          return MaterialApp(
+            title: 'SyncFit',
+            debugShowCheckedModeBanner: false,
+            theme: buildTheme(Brightness.light),
+            darkTheme: buildTheme(Brightness.dark),
+            themeMode: themeSvc.mode,
+            home: const AuthGate(),
+          );
+        },
+      ),
     );
   }
 }
@@ -61,11 +64,18 @@ class _AuthGateState extends State<AuthGate> {
   Widget build(BuildContext context) {
     final auth = context.watch<AuthService>();
     final userId = auth.user?.id;
+    final profiles = context.watch<ProfileService>();
+    debugPrint(
+      'AuthGate.build: userId=$userId lastUserId=$_lastUserId '
+      'isSignedIn=${auth.isSignedIn} profilesLoading=${profiles.isLoading} '
+      'profile=${profiles.profile?.id}',
+    );
 
     if (userId != _lastUserId) {
       _lastUserId = userId;
       // Not during build — these notify their listeners.
       WidgetsBinding.instance.addPostFrameCallback((_) {
+        debugPrint('AuthGate: postFrameCallback firing for userId=$userId');
         if (!mounted) return;
         context.read<ExerciseService>().clear();
         context.read<WorkoutService>().clear();
@@ -75,6 +85,10 @@ class _AuthGateState extends State<AuthGate> {
         if (userId != null) {
           context.read<ExerciseService>().load(force: true);
           context.read<ProfileService>().load().then((_) {
+            debugPrint(
+              'AuthGate: ProfileService.load() resolved, '
+              'profile=${context.read<ProfileService>().profile?.id}',
+            );
             if (!mounted) return;
             final profile = context.read<ProfileService>().profile;
             if (profile?.isTrainer == true) {
@@ -89,7 +103,6 @@ class _AuthGateState extends State<AuthGate> {
     }
 
     if (!auth.isSignedIn) return const LoginScreen();
-    final profiles = context.watch<ProfileService>();
     if (profiles.isLoading || profiles.profile == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
