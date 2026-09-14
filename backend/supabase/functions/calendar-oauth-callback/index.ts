@@ -1,5 +1,12 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { corsHeaders } from "../_shared/cors.ts";
+
+// Inlined because the Supabase dashboard deploys this function as a single
+// pasted file and does not bundle repository-relative shared imports.
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-cron-secret",
+};
 
 const headers = { ...corsHeaders, "Content-Type": "text/html; charset=utf-8" };
 
@@ -16,6 +23,13 @@ Deno.serve(async (req) => {
   if (!state) return new Response("Missing OAuth state", { status: 400, headers });
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const callbackUrl = new URL(
+    `${supabaseUrl}/functions/v1/calendar-oauth-callback`,
+  );
+  callbackUrl.searchParams.set(
+    "apikey",
+    Deno.env.get("SUPABASE_ANON_KEY")!,
+  );
   const service = createClient(
     supabaseUrl,
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
@@ -43,7 +57,7 @@ Deno.serve(async (req) => {
       code,
       client_id: Deno.env.get("GOOGLE_CLIENT_ID")!,
       client_secret: Deno.env.get("GOOGLE_CLIENT_SECRET")!,
-      redirect_uri: `${supabaseUrl}/functions/v1/calendar-oauth-callback`,
+      redirect_uri: callbackUrl.toString(),
       grant_type: "authorization_code",
     }),
   });

@@ -196,7 +196,11 @@ class CalendarService extends ChangeNotifier {
         body: {'redirect_to': redirectTo},
       );
       final url = (response.data as Map)['url'] as String?;
-      if (url == null || !await launchUrl(Uri.parse(url))) {
+      if (url == null ||
+          !await launchUrl(
+            Uri.parse(url),
+            webOnlyWindowName: '_self',
+          )) {
         throw StateError('Could not open Google authorization.');
       }
     } finally {
