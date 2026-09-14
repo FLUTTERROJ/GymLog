@@ -74,14 +74,28 @@ Deno.serve(async (req) => {
     expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
   });
 
-  const callback = `${url}/functions/v1/calendar-oauth-callback`;
+  // Google redirects the user's browser straight to this URL -- a plain
+  // navigation, not a request our code makes, so it can never carry a
+  // custom Authorization/apikey header. This project's Edge Functions
+  // gateway requires an apikey on every request regardless (there's no
+  // per-function exemption for it, unlike JWT verification), so the only
+  // way to satisfy that here is to put it in the URL itself as a query
+  // parameter, which Supabase's gateway also accepts.
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+  const callback = `${url}/functions/v1/calendar-oauth-callback?apikey=${
+    encodeURIComponent(anonKey)
+  }`;
   const google = new URL("https://accounts.google.com/o/oauth2/v2/auth");
   google.searchParams.set("client_id", Deno.env.get("GOOGLE_CLIENT_ID")!);
   google.searchParams.set("redirect_uri", callback);
   google.searchParams.set("response_type", "code");
   google.searchParams.set("scope", scopes);
   google.searchParams.set("access_type", "offline");
-  google.searchParams.set("prompt", "consent");
+  // "select_account" forces the account chooser to show every time, rather
+  // than Google silently using whichever account happens to already be
+  // signed into that browser -- which has nothing to do with which account
+  // was used to sign into the app itself.
+  google.searchParams.set("prompt", "consent select_account");
   google.searchParams.set("state", state);
 
   return new Response(JSON.stringify({ url: google.toString() }), {
