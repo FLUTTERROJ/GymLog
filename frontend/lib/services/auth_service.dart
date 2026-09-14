@@ -24,13 +24,7 @@ class AuthService extends ChangeNotifier {
     } else {
       _session = restored;
     }
-    debugPrint(
-        'AuthService: constructed, restored session user=${_session?.user.id}');
     _sub = _client.auth.onAuthStateChange.listen((state) {
-      debugPrint(
-        'AuthService: onAuthStateChange event=${state.event} '
-        'user=${state.session?.user.id}',
-      );
       _session = state.session;
       notifyListeners();
     });

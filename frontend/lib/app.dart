@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -65,17 +64,11 @@ class _AuthGateState extends State<AuthGate> {
     final auth = context.watch<AuthService>();
     final userId = auth.user?.id;
     final profiles = context.watch<ProfileService>();
-    debugPrint(
-      'AuthGate.build: userId=$userId lastUserId=$_lastUserId '
-      'isSignedIn=${auth.isSignedIn} profilesLoading=${profiles.isLoading} '
-      'profile=${profiles.profile?.id}',
-    );
 
     if (userId != _lastUserId) {
       _lastUserId = userId;
       // Not during build — these notify their listeners.
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        debugPrint('AuthGate: postFrameCallback firing for userId=$userId');
         if (!mounted) return;
         context.read<ExerciseService>().clear();
         context.read<WorkoutService>().clear();
@@ -85,10 +78,6 @@ class _AuthGateState extends State<AuthGate> {
         if (userId != null) {
           context.read<ExerciseService>().load(force: true);
           context.read<ProfileService>().load().then((_) {
-            debugPrint(
-              'AuthGate: ProfileService.load() resolved, '
-              'profile=${context.read<ProfileService>().profile?.id}',
-            );
             if (!mounted) return;
             final profile = context.read<ProfileService>().profile;
             if (profile?.isTrainer == true) {

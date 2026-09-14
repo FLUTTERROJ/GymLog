@@ -47,9 +47,6 @@ class ProfileService extends ChangeNotifier {
 
   Future<void> load() async {
     final user = _client.auth.currentUser;
-    debugPrint(
-      'ProfileService.load: called, user=${user?.id} loading=$_loading',
-    );
     if (user == null || _loading) return;
     _loading = true;
     notifyListeners();
@@ -60,9 +57,22 @@ class ProfileService extends ChangeNotifier {
           .eq('id', user.id)
           .maybeSingle()
           .timeout(Env.networkTimeout);
-      _profile = row == null
-          ? null
-          : AppProfile.fromMap(Map<String, dynamic>.from(row));
+      if (row == null) {
+        // A signed-in user with no profile row at all -- normally
+        // impossible, since a trigger on auth.users creates one for every
+        // signup, but an account created before that trigger existed can
+        // slip through. AuthGate can't tell "still loading" apart from
+        // "loaded, and it's genuinely empty" (both look like `profile ==
+        // null`), so left alone this hangs on the loading spinner forever.
+        // Signing out is the same recovery the catch block below already
+        // uses for an unusable session.
+        _profile = null;
+        await _client.auth.signOut().timeout(Env.networkTimeout).catchError(
+              (_) {},
+            );
+      } else {
+        _profile = AppProfile.fromMap(Map<String, dynamic>.from(row));
+      }
     } catch (error) {
       // A stale session left over from a different Supabase project (or an
       // account that no longer exists) fails right here rather than at
@@ -110,7 +120,6 @@ class ProfileService extends ChangeNotifier {
   }
 
   void clear() {
-    debugPrint('ProfileService.clear: called (was loading=$_loading)');
     _profile = null;
     _loading = false;
     notifyListeners();
