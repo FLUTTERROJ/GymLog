@@ -51,21 +51,45 @@ class ProfileService extends ChangeNotifier {
     _loading = true;
     notifyListeners();
     try {
-      final row = await _client
+      var row = await _client
           .from('profiles')
           .select('id, username, role')
           .eq('id', user.id)
           .maybeSingle()
           .timeout(Env.networkTimeout);
+
       if (row == null) {
-        // A signed-in user with no profile row at all -- normally
-        // impossible, since a trigger on auth.users creates one for every
-        // signup, but an account created before that trigger existed can
-        // slip through. AuthGate can't tell "still loading" apart from
-        // "loaded, and it's genuinely empty" (both look like `profile ==
-        // null`), so left alone this hangs on the loading spinner forever.
-        // Signing out is the same recovery the catch block below already
-        // uses for an unusable session.
+        // A signed-in user with no profile row at all. This is meant to be
+        // impossible -- a trigger on auth.users creates one for every
+        // signup -- but that trigger hasn't reliably fired for every
+        // sign-in path (seen in practice for Google-only accounts with no
+        // prior email/password signup). Rather than depend on fully
+        // understanding an opaque trigger-timing issue inside Supabase
+        // Auth, create the missing row directly: same fields, same
+        // defaults the trigger itself would have used.
+        final meta = user.userMetadata;
+        final fullName = (meta?['full_name'] ?? meta?['name']) as String?;
+        await _client.from('profiles').upsert({
+          'id': user.id,
+          'email': user.email,
+          if (fullName != null) 'full_name': fullName,
+        }).timeout(Env.networkTimeout);
+
+        row = await _client
+            .from('profiles')
+            .select('id, username, role')
+            .eq('id', user.id)
+            .maybeSingle()
+            .timeout(Env.networkTimeout);
+      }
+
+      if (row == null) {
+        // Still nothing after trying to create it -- genuinely broken, not
+        // just a missing trigger. AuthGate can't tell "still loading" apart
+        // from "loaded, and it's empty" (both look like `profile == null`),
+        // so left alone this hangs on the loading spinner forever. Signing
+        // out is the same recovery the catch block below already uses for
+        // an unusable session.
         _profile = null;
         await _client.auth.signOut().timeout(Env.networkTimeout).catchError(
               (_) {},
