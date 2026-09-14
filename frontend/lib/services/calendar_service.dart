@@ -183,8 +183,16 @@ class CalendarService extends ChangeNotifier {
 
     try {
       final redirectTo = kIsWeb ? Uri.base.origin : Env.authRedirectUrl;
+      final accessToken = _client.auth.currentSession?.accessToken;
+      if (accessToken == null) {
+        throw StateError('Your session has expired. Please sign in again.');
+      }
       final response = await _client.functions.invoke(
         'calendar-authorize',
+        headers: {
+          'apikey': Env.supabaseAnonKey,
+          'Authorization': 'Bearer $accessToken',
+        },
         body: {'redirect_to': redirectTo},
       );
       final url = (response.data as Map)['url'] as String?;
