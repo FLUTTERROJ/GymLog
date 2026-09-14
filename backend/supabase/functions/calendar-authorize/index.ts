@@ -1,5 +1,13 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { corsHeaders } from "../_shared/cors.ts";
+
+// Inlined from ../_shared/cors.ts -- kept self-contained since this
+// function is deployed via dashboard paste, which doesn't resolve
+// relative imports across files the way the CLI does.
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-cron-secret",
+};
 
 const scopes = [
   "https://www.googleapis.com/auth/calendar.readonly",
@@ -15,7 +23,9 @@ function randomState(): string {
 }
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
   const headers = { ...corsHeaders, "Content-Type": "application/json" };
   const auth = req.headers.get("Authorization");
   if (!auth) {
@@ -26,10 +36,13 @@ Deno.serve(async (req) => {
   }
 
   const url = Deno.env.get("SUPABASE_URL")!;
-  const caller = createClient(url, Deno.env.get("SUPABASE_ANON_KEY")!, {
-    global: { headers: { Authorization: auth } },
-  });
-  const { data: { user }, error } = await caller.auth.getUser();
+  const caller = createClient(url, Deno.env.get("SUPABASE_ANON_KEY")!);
+  // getUser() with no argument reads from a session established on this
+  // client (via a prior sign-in call) -- this client has never signed in,
+  // it only received the caller's token in a header, so the token has to
+  // be passed explicitly or there's nothing for it to check.
+  const jwt = auth.replace(/^Bearer\s+/i, "");
+  const { data: { user }, error } = await caller.auth.getUser(jwt);
   if (error || !user) {
     return new Response(JSON.stringify({ error: "Not authenticated" }), {
       status: 401,
@@ -39,7 +52,10 @@ Deno.serve(async (req) => {
 
   const body = await req.json();
   const redirectTo = body.redirect_to as string;
-  if (!redirectTo || !/^https?:\/\/|^io\.supabase\.syncfit:\/\//.test(redirectTo)) {
+  if (
+    !redirectTo ||
+    !/^https?:\/\/|^io\.supabase\.syncfit:\/\//.test(redirectTo)
+  ) {
     return new Response(JSON.stringify({ error: "Invalid redirect URL" }), {
       status: 400,
       headers,
@@ -47,7 +63,10 @@ Deno.serve(async (req) => {
   }
 
   const state = randomState();
-  const service = createClient(url, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+  const service = createClient(
+    url,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+  );
   await service.from("calendar_oauth_states").insert({
     state,
     trainer_id: user.id,
@@ -65,5 +84,7 @@ Deno.serve(async (req) => {
   google.searchParams.set("prompt", "consent");
   google.searchParams.set("state", state);
 
-  return new Response(JSON.stringify({ url: google.toString() }), { headers });
+  return new Response(JSON.stringify({ url: google.toString() }), {
+    headers,
+  });
 });

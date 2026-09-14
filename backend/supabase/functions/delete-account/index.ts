@@ -12,9 +12,17 @@
 // A trainer's *trainees* are unaffected: profiles.trainer_id and
 // workouts.trainer_id are ON DELETE SET NULL, so a trainee's own logged
 // history survives their trainer's account being deleted.
+//
+// Self-contained (no ../_shared imports): deployed via dashboard paste,
+// which doesn't resolve relative imports across files the way the CLI does.
 
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { corsHeaders } from "../_shared/cors.ts";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-cron-secret",
+};
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -39,11 +47,15 @@ Deno.serve(async (req) => {
   const callerClient = createClient(
     supabaseUrl,
     Deno.env.get("SUPABASE_ANON_KEY")!,
-    { global: { headers: { Authorization: authHeader } } },
   );
 
+  // getUser() with no argument reads from a session established on this
+  // client (via a prior sign-in call) -- this client has never signed in,
+  // it only received the caller's token in a header, so the token has to
+  // be passed explicitly or there's nothing for it to check.
+  const jwt = authHeader.replace(/^Bearer\s+/i, "");
   const { data: { user }, error: userError } = await callerClient.auth
-    .getUser();
+    .getUser(jwt);
   if (userError || !user) {
     return new Response(JSON.stringify({ error: "Not authenticated" }), {
       status: 401,
