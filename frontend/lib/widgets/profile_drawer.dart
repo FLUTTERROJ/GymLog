@@ -15,6 +15,7 @@ class ProfileDrawer extends StatelessWidget {
   Widget build(BuildContext context) {
     final auth = context.watch<AuthService>();
     final profile = context.watch<ProfileService>().profile;
+    final isTrainer = profile?.isTrainer ?? false;
     final theme = Theme.of(context);
 
     final initial = (profile?.username ?? auth.displayName).trim().isNotEmpty
@@ -76,32 +77,34 @@ class ProfileDrawer extends StatelessWidget {
                       );
                     },
                   ),
-                  ListTile(
-                    leading: const Icon(Icons.event_available_outlined),
-                    trailing: const Icon(Icons.chevron_right),
-                    title: const Text('Calendar reminders'),
-                    onTap: () {
-                      Navigator.of(context).pop();
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => const CalendarSettingsScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                  ListTile(
-                    leading: const Icon(Icons.mail_outline),
-                    trailing: const Icon(Icons.chevron_right),
-                    title: const Text('Email templates'),
-                    onTap: () {
-                      Navigator.of(context).pop();
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => const EmailTemplatesScreen(),
-                        ),
-                      );
-                    },
-                  ),
+                  if (isTrainer) ...[
+                    ListTile(
+                      leading: const Icon(Icons.event_available_outlined),
+                      trailing: const Icon(Icons.chevron_right),
+                      title: const Text('Calendar reminders'),
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const CalendarSettingsScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.mail_outline),
+                      trailing: const Icon(Icons.chevron_right),
+                      title: const Text('Email templates'),
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const EmailTemplatesScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
                   ListTile(
                     leading: const Icon(Icons.help_outline),
                     trailing: const Icon(Icons.chevron_right),
