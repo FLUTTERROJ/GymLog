@@ -4,6 +4,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../services/auth_service.dart';
 import '../services/profile_service.dart';
+import '../screens/help/help_screen.dart';
+import '../screens/trainer/calendar_settings_screen.dart';
+import '../screens/trainer/email_templates_screen.dart';
 
 class ProfileDrawer extends StatelessWidget {
   const ProfileDrawer({super.key});
@@ -70,6 +73,45 @@ class ProfileDrawer extends StatelessWidget {
                       Navigator.of(context).push(
                         MaterialPageRoute(
                             builder: (_) => const ProfileScreen()),
+                      );
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.event_available_outlined),
+                    trailing: const Icon(Icons.chevron_right),
+                    title: const Text('Calendar reminders'),
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const CalendarSettingsScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.mail_outline),
+                    trailing: const Icon(Icons.chevron_right),
+                    title: const Text('Email templates'),
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const EmailTemplatesScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.help_outline),
+                    trailing: const Icon(Icons.chevron_right),
+                    title: const Text('How SyncFit works'),
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const HelpScreen(),
+                        ),
                       );
                     },
                   ),

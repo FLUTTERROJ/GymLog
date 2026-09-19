@@ -35,10 +35,11 @@ class _TraineesScreenState extends State<TraineesScreen> {
     final theme = Theme.of(context);
     final auth = context.watch<AuthService>();
     final trainer = context.watch<TrainerService>();
+    final isMobile = MediaQuery.sizeOf(context).width < 700;
 
     return Scaffold(
       key: _scaffoldKey,
-      endDrawer: const ProfileDrawer(),
+      endDrawer: isMobile ? const ProfileDrawer() : null,
       appBar: AppBar(
         titleSpacing: 20,
         title: Column(
@@ -58,34 +59,45 @@ class _TraineesScreenState extends State<TraineesScreen> {
             icon: const Icon(Icons.refresh),
             onPressed: () => context.read<TrainerService>().loadTrainees(),
           ),
-          IconButton(
-            tooltip: 'Calendar reminders',
-            icon: const Icon(Icons.event_available_outlined),
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const CalendarSettingsScreen()),
-            ),
-          ),
-          IconButton(
-            tooltip: 'Email templates',
-            icon: const Icon(Icons.mail_outline),
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => const EmailTemplatesScreen(),
+          if (!isMobile) ...[
+            IconButton(
+              tooltip: 'Calendar reminders',
+              icon: const Icon(Icons.event_available_outlined),
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const CalendarSettingsScreen(),
+                ),
               ),
             ),
-          ),
-          IconButton(
-            tooltip: 'How SyncFit works',
-            icon: const Icon(Icons.help_outline),
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const HelpScreen()),
+            IconButton(
+              tooltip: 'Email templates',
+              icon: const Icon(Icons.mail_outline),
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const EmailTemplatesScreen(),
+                ),
+              ),
             ),
-          ),
-          IconButton(
-            tooltip: 'Open profile',
-            icon: const Icon(Icons.menu),
-            onPressed: () => _scaffoldKey.currentState?.openEndDrawer(),
-          ),
+            IconButton(
+              tooltip: 'How SyncFit works',
+              icon: const Icon(Icons.help_outline),
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const HelpScreen()),
+              ),
+            ),
+            IconButton(
+              tooltip: 'Open profile',
+              icon: const Icon(Icons.account_circle_outlined),
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const ProfileScreen()),
+              ),
+            ),
+          ] else
+            IconButton(
+              tooltip: 'Open profile menu',
+              icon: const Icon(Icons.menu),
+              onPressed: () => _scaffoldKey.currentState?.openEndDrawer(),
+            ),
           const SizedBox(width: 8),
         ],
       ),
