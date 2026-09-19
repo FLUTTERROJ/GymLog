@@ -298,7 +298,8 @@ class _CalendarSettingsScreenState extends State<CalendarSettingsScreen> {
                       children: [
                         Expanded(
                           child: Text(
-                            '${mapping.calendarName} → ${mapping.traineeLabel ?? "?"}',
+                            '${mapping.calendarName} → '
+                            '${mapping.traineeLabel ?? "Trainee"}',
                           ),
                         ),
                         IconButton(

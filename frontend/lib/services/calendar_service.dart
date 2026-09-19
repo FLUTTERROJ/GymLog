@@ -123,14 +123,23 @@ class CalendarMapping {
   final String? traineeLabel;
 
   factory CalendarMapping.fromMap(Map<String, dynamic> map) {
-    final trainee = map['trainee'];
+    final rawTrainee = map['trainee'];
+    final trainee = rawTrainee is List && rawTrainee.isNotEmpty
+        ? rawTrainee.first
+        : rawTrainee;
+    final username =
+        trainee is Map ? trainee['username'] as String? : null;
+    final fullName =
+        trainee is Map ? trainee['full_name'] as String? : null;
     return CalendarMapping(
       id: map['id'] as String,
       calendarName: map['calendar_name'] as String,
       traineeId: map['trainee_id'] as String,
-      traineeLabel: trainee is Map
-          ? ((trainee['username'] ?? trainee['full_name']) as String?)
-          : null,
+      traineeLabel: username?.trim().isNotEmpty == true
+          ? username
+          : fullName?.trim().isNotEmpty == true
+              ? fullName
+              : null,
     );
   }
 }
