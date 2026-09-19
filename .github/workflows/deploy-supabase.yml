@@ -1,0 +1,46 @@
+name: Deploy Supabase
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "backend/supabase/**"
+      - ".github/workflows/deploy-supabase.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Apply database migrations
+        run: supabase db push --project-ref "$SUPABASE_PROJECT_REF"
+
+      - name: Deploy calendar authorization
+        run: supabase functions deploy calendar-authorize --project-ref "$SUPABASE_PROJECT_REF"
+
+      - name: Deploy calendar OAuth callback
+        run: supabase functions deploy calendar-oauth-callback --project-ref "$SUPABASE_PROJECT_REF"
+
+      - name: Deploy calendar preview
+        run: supabase functions deploy calendar-preview --project-ref "$SUPABASE_PROJECT_REF"
+
+      - name: Deploy reminder sender
+        run: supabase functions deploy calendar-send-reminders --project-ref "$SUPABASE_PROJECT_REF"

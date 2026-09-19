@@ -275,8 +275,10 @@ This setting is included in `supabase/config.toml`.
 - **URL**: `https://YOUR_PROJECT_REF.functions.supabase.co/calendar-send-reminders`
 - **Method**: POST
 - **Headers**: `X-Cron-Secret: <the CRON_SECRET value from step 3>`
-- **Schedule**: `30 12 * * *` (6:00pm IST, i.e. the evening before each
-  session) — adjust as you like.
+- **Schedule**: `0 * * * *` (the function sends only at 8:00pm
+  Australia/Sydney, i.e. the evening before each session) — the hourly
+  schedule keeps the send time correct across Sydney/Canberra daylight
+  saving changes.
 
 Equivalent raw SQL, if you'd rather run it directly (requires the `pg_cron`
 and `pg_net` extensions, enabled the same way from **Database → Extensions**):
@@ -284,7 +286,7 @@ and `pg_net` extensions, enabled the same way from **Database → Extensions**):
 ```sql
 select cron.schedule(
   'daily-calendar-reminders',
-  '30 12 * * *',
+  '0 * * * *',
   $$
   select net.http_post(
     url := 'https://YOUR_PROJECT_REF.functions.supabase.co/calendar-send-reminders',

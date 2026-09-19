@@ -16,8 +16,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-cron-secret",
 };
-const TIMEZONE = "Asia/Kolkata";
-const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
+const TIMEZONE = "Australia/Sydney";
 
 type PaidStatus = "Paid" | "Unpaid";
 type ParsedSession = {
@@ -55,11 +54,35 @@ function tomorrowRangeUtc(now = new Date()) {
     Number(get("month")) - 1,
     Number(get("day")),
   );
-  const tomorrow = todayUtc + 24 * 60 * 60 * 1000 - IST_OFFSET_MS;
+  const offsetParts = new Intl.DateTimeFormat("en-US", {
+    timeZone: TIMEZONE,
+    timeZoneName: "longOffset",
+  }).formatToParts(now);
+  const offset = offsetParts.find((part) => part.type === "timeZoneName")?.value;
+  const offsetMatch = offset?.match(/GMT([+-])(\d{2})(?::(\d{2}))?/);
+  const offsetMs = offsetMatch
+    ? (Number(offsetMatch[2]) * 60 + Number(offsetMatch[3] ?? 0)) *
+      60 *
+      1000 *
+      (offsetMatch[1] === "+" ? 1 : -1)
+    : 10 * 60 * 60 * 1000;
+  const tomorrow = todayUtc + 24 * 60 * 60 * 1000 - offsetMs;
   return {
     timeMin: new Date(tomorrow).toISOString(),
     timeMax: new Date(tomorrow + 24 * 60 * 60 * 1000).toISOString(),
   };
+}
+
+function isSydneyEightPm(now = new Date()): boolean {
+  const parts = new Intl.DateTimeFormat("en-AU", {
+    timeZone: TIMEZONE,
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(now);
+  const hour = parts.find((part) => part.type === "hour")?.value;
+  const minute = parts.find((part) => part.type === "minute")?.value;
+  return hour === "20" && minute === "00";
 }
 
 async function refreshGoogleAccessToken(
@@ -199,6 +222,13 @@ Deno.serve(async (req) => {
   }
 
   const jsonHeaders = { ...corsHeaders, "Content-Type": "application/json" };
+
+  if (!isSydneyEightPm()) {
+    return new Response(
+      JSON.stringify({ skipped: true, reason: "Not 8:00 PM Australia/Sydney" }),
+      { headers: jsonHeaders },
+    );
+  }
 
   const cronSecret = Deno.env.get("CRON_SECRET")!;
   if (req.headers.get("X-Cron-Secret") !== cronSecret) {
