@@ -31,47 +31,59 @@ class _EmailTemplatesScreenState extends State<EmailTemplatesScreen> {
       context: context,
       builder: (dialogContext) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
+          constraints: const BoxConstraints(maxWidth: 560),
           title: Text(existing == null ? 'New email template' : 'Edit template'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: location,
-                  decoration: const InputDecoration(labelText: 'Location'),
-                ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  value: paidStatus,
-                  decoration: const InputDecoration(labelText: 'Session type'),
-                  items: const [
-                    DropdownMenuItem(value: 'Paid', child: Text('Paid')),
-                    DropdownMenuItem(value: 'Unpaid', child: Text('Unpaid')),
-                  ],
-                  onChanged: (value) =>
-                      setDialogState(() => paidStatus = value ?? paidStatus),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: subject,
-                  decoration: const InputDecoration(labelText: 'Email subject'),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: body,
-                  maxLines: 7,
-                  decoration: const InputDecoration(
-                    labelText: 'Email body',
-                    hintText:
-                        'Hi {traineeName}, your session is tomorrow at {sessionTime}.',
+          content: SizedBox(
+            width: double.infinity,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: location,
+                    decoration: const InputDecoration(labelText: 'Location'),
                   ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Placeholders: {traineeName}, {sessionTime}, {location}, {paidStatus}',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-              ],
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    value: paidStatus,
+                    decoration:
+                        const InputDecoration(labelText: 'Session type'),
+                    items: const [
+                      DropdownMenuItem(value: 'Paid', child: Text('Paid')),
+                      DropdownMenuItem(
+                        value: 'Unpaid',
+                        child: Text('Unpaid'),
+                      ),
+                    ],
+                    onChanged: (value) =>
+                        setDialogState(() => paidStatus = value ?? paidStatus),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: subject,
+                    decoration:
+                        const InputDecoration(labelText: 'Email subject'),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: body,
+                    maxLines: 7,
+                    decoration: const InputDecoration(
+                      labelText: 'Email body',
+                      hintText:
+                          'Hi {traineeName}, your session is tomorrow at {sessionTime}.',
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Placeholders: {traineeName}, {sessionTime}, '
+                    '{location}, {paidStatus}',
+                    softWrap: true,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+              ),
             ),
           ),
           actions: [
