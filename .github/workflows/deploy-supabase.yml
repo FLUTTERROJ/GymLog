@@ -29,7 +29,9 @@ jobs:
       - name: Set up Supabase CLI
         uses: supabase/setup-cli@v1
         with:
-          version: latest
+          # Pin the CLI so setup does not call the GitHub releases API to
+          # resolve "latest" on every run.
+          version: 2.34.3
 
       - name: Validate Supabase credentials
         run: |
