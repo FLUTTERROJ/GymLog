@@ -270,12 +270,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
               );
             },
           ),
-          const SizedBox(height: 24),
-          Text(
-            'Danger zone',
-            style: theme.textTheme.labelLarge
-                ?.copyWith(color: theme.colorScheme.error),
-          ),
           const SizedBox(height: 12),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
