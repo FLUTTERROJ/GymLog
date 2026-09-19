@@ -8,6 +8,7 @@ import '../../services/trainer_service.dart';
 import '../help/help_screen.dart';
 import '../../widgets/profile_drawer.dart';
 import 'calendar_settings_screen.dart';
+import 'email_templates_screen.dart';
 import 'create_challenge_screen.dart';
 import 'trainee_workouts_screen.dart';
 
@@ -62,6 +63,15 @@ class _TraineesScreenState extends State<TraineesScreen> {
             icon: const Icon(Icons.event_available_outlined),
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const CalendarSettingsScreen()),
+            ),
+          ),
+          IconButton(
+            tooltip: 'Email templates',
+            icon: const Icon(Icons.mail_outline),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => const EmailTemplatesScreen(),
+              ),
             ),
           ),
           IconButton(

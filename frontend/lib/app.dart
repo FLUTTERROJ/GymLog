@@ -13,6 +13,7 @@ import 'services/workout_service.dart';
 import 'services/profile_service.dart';
 import 'services/trainer_service.dart';
 import 'services/theme_service.dart';
+import 'services/email_template_service.dart';
 
 class SyncFitApp extends StatelessWidget {
   const SyncFitApp({super.key});
@@ -29,6 +30,7 @@ class SyncFitApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ChallengeService()),
         ChangeNotifierProvider(create: (_) => CalendarService()),
         ChangeNotifierProvider(create: (_) => ThemeService()),
+        ChangeNotifierProvider(create: (_) => EmailTemplateService()),
       ],
       child: Builder(
         builder: (context) {
@@ -75,6 +77,7 @@ class _AuthGateState extends State<AuthGate> {
         context.read<ProfileService>().clear();
         context.read<TrainerService>().clear();
         context.read<CalendarService>().clear();
+        context.read<EmailTemplateService>().clear();
         if (userId != null) {
           context.read<ExerciseService>().load(force: true);
           context.read<ProfileService>().load().then((_) {

@@ -10,14 +10,188 @@
 // nothing twice.
 
 import { createClient } from "npm:@supabase/supabase-js@2";
-import {
-  fetchEventsInRange,
-  parseSessionTitle,
-  refreshGoogleAccessToken,
-  sendReminderEmail,
-  tomorrowRangeUtc,
-} from "../_shared/calendar.ts";
-import { corsHeaders } from "../_shared/cors.ts";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-cron-secret",
+};
+const TIMEZONE = "Asia/Kolkata";
+const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
+
+type PaidStatus = "Paid" | "Unpaid";
+type ParsedSession = {
+  names: string[];
+  paidStatus: PaidStatus;
+  location: string;
+};
+
+function parseSessionTitle(rawTitle: string): ParsedSession | null {
+  const parts = rawTitle.split(/\s*:\s*/).map((p) => p.trim()).filter(Boolean);
+  if (parts.length < 2) return null;
+  const location = parts[parts.length - 1];
+  const paidRaw = parts[parts.length - 2].toLowerCase();
+  if (paidRaw !== "paid" && paidRaw !== "unpaid") return null;
+  const names = parts
+    .slice(0, -2)
+    .flatMap((part) => part.split("/"))
+    .map((name) => name.trim())
+    .filter(Boolean);
+  return names.length === 0
+    ? null
+    : { names, paidStatus: paidRaw === "paid" ? "Paid" : "Unpaid", location };
+}
+
+function tomorrowRangeUtc(now = new Date()) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: TIMEZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(now);
+  const get = (type: string) => parts.find((p) => p.type === type)!.value;
+  const todayUtc = Date.UTC(
+    Number(get("year")),
+    Number(get("month")) - 1,
+    Number(get("day")),
+  );
+  const tomorrow = todayUtc + 24 * 60 * 60 * 1000 - IST_OFFSET_MS;
+  return {
+    timeMin: new Date(tomorrow).toISOString(),
+    timeMax: new Date(tomorrow + 24 * 60 * 60 * 1000).toISOString(),
+  };
+}
+
+async function refreshGoogleAccessToken(
+  refreshToken: string,
+  clientId: string,
+  clientSecret: string,
+): Promise<string> {
+  const response = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      client_id: clientId,
+      client_secret: clientSecret,
+      refresh_token: refreshToken,
+      grant_type: "refresh_token",
+    }),
+  });
+  if (!response.ok) {
+    throw new Error(
+      `Google token refresh failed (${response.status}): ${await response.text()}`,
+    );
+  }
+  return (await response.json()).access_token as string;
+}
+
+async function fetchEventsInRange(
+  accessToken: string,
+  timeMin: string,
+  timeMax: string,
+) {
+  const url = new URL(
+    "https://www.googleapis.com/calendar/v3/calendars/primary/events",
+  );
+  url.searchParams.set("timeMin", timeMin);
+  url.searchParams.set("timeMax", timeMax);
+  url.searchParams.set("singleEvents", "true");
+  url.searchParams.set("orderBy", "startTime");
+  url.searchParams.set("maxResults", "250");
+  const response = await fetch(url, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!response.ok) {
+    throw new Error(
+      `Google Calendar fetch failed (${response.status}): ${await response.text()}`,
+    );
+  }
+  const data = await response.json();
+  return ((data.items ?? []) as Array<Record<string, any>>)
+    .filter((item) => item.status !== "cancelled" && item.summary)
+    .map((item) => ({
+      id: item.id as string,
+      summary: item.summary as string,
+      start: (item.start?.dateTime ?? item.start?.date) as string,
+    }));
+}
+
+async function sendReminderEmail(
+  input: {
+    to: string;
+    traineeName: string;
+    sessionStart: string;
+    location: string;
+    paidStatus: PaidStatus;
+    subjectTemplate?: string;
+    bodyTemplate?: string;
+  },
+  accessToken: string,
+) {
+  const sessionTime = new Date(input.sessionStart).toLocaleString("en-IN", {
+    timeZone: TIMEZONE,
+    weekday: "long",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+  const values: Record<string, string> = {
+    traineeName: input.traineeName,
+    sessionTime,
+    location: input.location,
+    paidStatus: input.paidStatus,
+  };
+  const replace = (value: string) =>
+    value.replace(
+      /\{(traineeName|sessionTime|location|paidStatus)\}/g,
+      (_, key: string) => escapeHtml(values[key]),
+    );
+  const html = input.bodyTemplate
+    ? replace(input.bodyTemplate).replace(/\n/g, "<br>")
+    : `<p>Hi ${escapeHtml(input.traineeName)},</p><p>Reminder: you have a training session tomorrow, ${escapeHtml(sessionTime)}, at ${escapeHtml(input.location)}.</p>${input.paidStatus === "Unpaid" ? "<p>Payment for this session is still pending.</p>" : ""}<p>See you there!</p>`;
+  const subject = input.subjectTemplate
+    ? replace(input.subjectTemplate)
+    : `Reminder: your session tomorrow at ${sessionTime}`;
+  const message = [
+    `To: ${input.to}`,
+    `Subject: =?UTF-8?B?${toBase64(subject)}?=`,
+    "MIME-Version: 1.0",
+    "Content-Type: text/html; charset=UTF-8",
+    "",
+    html,
+  ].join("\r\n");
+  const response = await fetch(
+    "https://gmail.googleapis.com/gmail/v1/users/me/messages/send",
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ raw: toBase64Url(message) }),
+    },
+  );
+  if (!response.ok) {
+    throw new Error(`Gmail send failed (${response.status}): ${await response.text()}`);
+  }
+}
+
+function toBase64(value: string) {
+  return btoa(String.fromCharCode(...new TextEncoder().encode(value)));
+}
+
+function toBase64Url(value: string) {
+  return toBase64(value).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -145,6 +319,16 @@ async function processTrainer(args: {
     .in("id", traineeIds);
 
   const profileById = new Map((profiles ?? []).map((p: any) => [p.id, p]));
+  const { data: templates } = await supabase
+    .from("email_templates")
+    .select("location, paid_status, subject, body")
+    .eq("trainer_id", trainerId);
+  const templateByKey = new Map(
+    (templates ?? []).map((template: any) => [
+      `${template.location.trim().toLowerCase()}::${template.paid_status}`,
+      template,
+    ]),
+  );
 
   const eventIds = parsedEvents.map((e) => e.event.id);
   const { data: existingReminders } = await supabase
@@ -173,6 +357,9 @@ async function processTrainer(args: {
       if (!profile?.email) continue;
 
       const traineeName = profile.username ?? profile.full_name ?? "there";
+      const template = templateByKey.get(
+        `${session.location.trim().toLowerCase()}::${session.paidStatus}`,
+      );
 
       try {
         await sendReminderEmail(
@@ -182,6 +369,8 @@ async function processTrainer(args: {
             sessionStart: event.start,
             location: session.location,
             paidStatus: session.paidStatus,
+            subjectTemplate: template?.subject,
+            bodyTemplate: template?.body,
           },
           accessToken,
         );

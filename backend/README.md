@@ -186,6 +186,15 @@ as the authenticated account. See
 `supabase/migrations/20260817000100_calendar_reminders.sql` for the schema and
 `supabase/functions/` for the two Edge Functions (`calendar-preview`, called
 live by the app; `calendar-send-reminders`, cron-triggered).
+`calendar-send-reminders` is self-contained and does not require the `_shared`
+directory when pasted into the Supabase dashboard.
+
+Trainers can create one email template for each location and payment status
+from the Templates page. Templates support `{traineeName}`, `{sessionTime}`,
+`{location}`, and `{paidStatus}` in both the subject and body. If no exact
+location/status template exists, the reminder uses the built-in default email.
+The template table is created by
+`supabase/migrations/20260919000100_email_templates.sql`.
 
 This is the one feature in this project that needs setup outside the SQL
 editor. All of it is one-time.
@@ -244,11 +253,10 @@ existing calendar functions. **Edge Functions** in the dashboard → **Deploy a
 new function** → paste in
 the contents of `supabase/functions/calendar-preview/index.ts`, name it
 `calendar-preview`. Repeat for `calendar-send-reminders`. Both import from
-`../_shared/calendar.ts` and `../_shared/cors.ts` — if the dashboard editor
-doesn't let you add extra files to a function, inline those two shared files'
-contents directly into each `index.ts` instead of importing them (functionally
-identical, just less DRY). The CLI (`supabase functions deploy`) handles the
-shared-file structure as-is if you'd rather use that.
+`../_shared/calendar.ts` and `../_shared/cors.ts` — if deploying
+`calendar-preview` from the dashboard, inline those two shared files'
+contents into its `index.ts`. `calendar-send-reminders` already contains its
+helpers inline, so it can be deployed by pasting that single file.
 
 The OAuth callback must be deployed with JWT verification disabled because
 Google, not the trainer's browser session, calls it:

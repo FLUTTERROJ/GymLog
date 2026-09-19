@@ -179,6 +179,8 @@ export interface ReminderEmailInput {
   sessionStart: string; // ISO
   location: string;
   paidStatus: "Paid" | "Unpaid";
+  subjectTemplate?: string;
+  bodyTemplate?: string;
 }
 
 export async function sendReminderEmail(
@@ -193,18 +195,28 @@ export async function sendReminderEmail(
     hour12: true,
   });
 
-  const paymentLine = input.paidStatus === "Unpaid"
-    ? "<p>Payment for this session is still pending.</p>"
-    : "";
-
-  const html = `
+  const defaultHtml = `
     <p>Hi ${escapeHtml(input.traineeName)},</p>
     <p>Reminder: you have a training session tomorrow, ${escapeHtml(sessionTime)}, at ${escapeHtml(input.location)}.</p>
-    ${paymentLine}
+    ${input.paidStatus === "Unpaid" ? "<p>Payment for this session is still pending.</p>" : ""}
     <p>See you there!</p>
   `.trim();
 
-  const subject = `Reminder: your session tomorrow at ${sessionTime}`;
+  const values: Record<string, string> = {
+    traineeName: input.traineeName,
+    sessionTime,
+    location: input.location,
+    paidStatus: input.paidStatus,
+  };
+  const replace = (value: string) =>
+    value.replace(/\{(traineeName|sessionTime|location|paidStatus)\}/g,
+      (_, key: string) => escapeHtml(values[key]),);
+  const html = input.bodyTemplate
+    ? replace(input.bodyTemplate).replace(/\n/g, "<br>")
+    : defaultHtml;
+  const subject = input.subjectTemplate
+    ? replace(input.subjectTemplate).replace(/<[^>]+>/g, "")
+    : `Reminder: your session tomorrow at ${sessionTime}`;
   const raw = toGmailRaw(input.to, subject, html);
 
   const response = await fetch(
