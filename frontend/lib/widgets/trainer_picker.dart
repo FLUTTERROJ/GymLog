@@ -162,22 +162,29 @@ class _TrainerPickerState extends State<TrainerPicker> {
           if (_focusNode.hasFocus && _results.isNotEmpty) ...[
             const SizedBox(height: 8),
             for (final trainer in _results)
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: CircleAvatar(
-                  child: Text(
-                    trainer.username.isNotEmpty
-                        ? trainer.username[0].toUpperCase()
-                        : '?',
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTapDown: (_) => _selectTrainer(trainer),
+                child: ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: CircleAvatar(
+                    child: Text(
+                      trainer.username.isNotEmpty
+                          ? trainer.username[0].toUpperCase()
+                          : '?',
+                    ),
                   ),
+                  title: Text(trainer.username),
+                  subtitle: trainer.fullName == null
+                      ? null
+                      : Text(trainer.fullName!),
+                  trailing: selected?.id == trainer.id
+                      ? Icon(
+                          Icons.check_circle,
+                          color: theme.colorScheme.primary,
+                        )
+                      : null,
                 ),
-                title: Text(trainer.username),
-                subtitle:
-                    trainer.fullName == null ? null : Text(trainer.fullName!),
-                trailing: selected?.id == trainer.id
-                    ? Icon(Icons.check_circle, color: theme.colorScheme.primary)
-                    : null,
-                onTap: () => _selectTrainer(trainer),
               ),
           ],
         ],
