@@ -92,6 +92,11 @@ class _TraineesScreenState extends State<TraineesScreen> {
                 MaterialPageRoute(builder: (_) => const ProfileScreen()),
               ),
             ),
+            IconButton(
+              tooltip: 'Sign out',
+              icon: const Icon(Icons.logout),
+              onPressed: () => context.read<AuthService>().signOut(),
+            ),
           ] else
             IconButton(
               tooltip: 'Open profile menu',

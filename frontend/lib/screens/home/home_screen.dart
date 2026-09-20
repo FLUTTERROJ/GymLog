@@ -137,10 +137,11 @@ class _HomeScreenState extends State<HomeScreen> {
     final workouts = context.watch<WorkoutService>();
     final workout = workouts.todayWorkout;
     final groups = workout?.groups ?? const [];
+    final isMobile = MediaQuery.sizeOf(context).width < 700;
 
     return Scaffold(
       key: _scaffoldKey,
-      endDrawer: const ProfileDrawer(),
+      endDrawer: isMobile ? const ProfileDrawer() : null,
       appBar: AppBar(
         titleSpacing: 20,
         title: Column(
@@ -163,11 +164,26 @@ class _HomeScreenState extends State<HomeScreen> {
               MaterialPageRoute(builder: (_) => const HelpScreen()),
             ),
           ),
-          IconButton(
-            tooltip: 'Open profile',
-            icon: const Icon(Icons.menu),
-            onPressed: () => _scaffoldKey.currentState?.openEndDrawer(),
-          ),
+          if (isMobile)
+            IconButton(
+              tooltip: 'Open profile menu',
+              icon: const Icon(Icons.menu),
+              onPressed: () => _scaffoldKey.currentState?.openEndDrawer(),
+            )
+          else ...[
+            IconButton(
+              tooltip: 'Open profile',
+              icon: const Icon(Icons.account_circle_outlined),
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const ProfileScreen()),
+              ),
+            ),
+            IconButton(
+              tooltip: 'Sign out',
+              icon: const Icon(Icons.logout),
+              onPressed: () => context.read<AuthService>().signOut(),
+            ),
+          ],
           const SizedBox(width: 8),
         ],
       ),
