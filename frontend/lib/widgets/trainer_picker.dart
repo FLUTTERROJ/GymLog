@@ -161,31 +161,40 @@ class _TrainerPickerState extends State<TrainerPicker> {
           ],
           if (_focusNode.hasFocus && _results.isNotEmpty) ...[
             const SizedBox(height: 8),
-            for (final trainer in _results)
-              GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTapDown: (_) => _selectTrainer(trainer),
-                child: ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: CircleAvatar(
-                    child: Text(
-                      trainer.username.isNotEmpty
-                          ? trainer.username[0].toUpperCase()
-                          : '?',
+            // Without this, a tap on a result counts as a tap *outside* the
+            // search field. On mobile web that unfocuses the field on
+            // pointer-down, which clears the results and removes the tile
+            // before a touch (which has to wait out the scroll-vs-tap
+            // decision) can finish -- so nothing ever got selected. A mouse
+            // resolves instantly, which is why desktop was unaffected.
+            TextFieldTapRegion(
+              child: Column(
+                children: [
+                  for (final trainer in _results)
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: CircleAvatar(
+                        child: Text(
+                          trainer.username.isNotEmpty
+                              ? trainer.username[0].toUpperCase()
+                              : '?',
+                        ),
+                      ),
+                      title: Text(trainer.username),
+                      subtitle: trainer.fullName == null
+                          ? null
+                          : Text(trainer.fullName!),
+                      trailing: selected?.id == trainer.id
+                          ? Icon(
+                              Icons.check_circle,
+                              color: theme.colorScheme.primary,
+                            )
+                          : null,
+                      onTap: () => _selectTrainer(trainer),
                     ),
-                  ),
-                  title: Text(trainer.username),
-                  subtitle: trainer.fullName == null
-                      ? null
-                      : Text(trainer.fullName!),
-                  trailing: selected?.id == trainer.id
-                      ? Icon(
-                          Icons.check_circle,
-                          color: theme.colorScheme.primary,
-                        )
-                      : null,
-                ),
+                ],
               ),
+            ),
           ],
         ],
       ),
