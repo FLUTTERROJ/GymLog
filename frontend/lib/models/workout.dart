@@ -90,7 +90,10 @@ class Workout {
         return byTime != 0 ? byTime : a.setNumber.compareTo(b.setNumber);
       });
 
-    final trainer = map['trainer'];
+    final rawTrainer = map['trainer'];
+    final trainer = rawTrainer is List && rawTrainer.isNotEmpty
+        ? rawTrainer.first
+        : rawTrainer;
     Map<String, dynamic>? trainerMap;
     if (trainer is Map) {
       trainerMap = Map<String, dynamic>.from(trainer);

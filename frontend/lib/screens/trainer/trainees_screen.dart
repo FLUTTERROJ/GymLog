@@ -5,6 +5,7 @@ import '../../core/formatting.dart';
 import '../../core/theme.dart';
 import '../../services/auth_service.dart';
 import '../../services/trainer_service.dart';
+import '../../services/profile_service.dart';
 import '../help/help_screen.dart';
 import '../../widgets/profile_drawer.dart';
 import 'calendar_settings_screen.dart';
@@ -35,6 +36,7 @@ class _TraineesScreenState extends State<TraineesScreen> {
     final theme = Theme.of(context);
     final auth = context.watch<AuthService>();
     final trainer = context.watch<TrainerService>();
+    final profile = context.watch<ProfileService>().profile;
     final isMobile = MediaQuery.sizeOf(context).width < 700;
 
     return Scaffold(
@@ -45,7 +47,7 @@ class _TraineesScreenState extends State<TraineesScreen> {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Hi, ${auth.displayName}'),
+            Text('Hi, ${profile?.username ?? auth.displayName}'),
             Text(
               'Your trainees',
               style: theme.textTheme.bodySmall

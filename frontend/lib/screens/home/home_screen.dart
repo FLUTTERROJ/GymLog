@@ -7,6 +7,7 @@ import '../../core/theme.dart';
 import '../../services/theme_service.dart';
 import '../../models/workout.dart';
 import '../../services/auth_service.dart';
+import '../../services/profile_service.dart';
 import '../../services/workout_service.dart';
 import '../../widgets/exercise_group_card.dart';
 import '../help/help_screen.dart';
@@ -135,6 +136,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final theme = Theme.of(context);
     final auth = context.watch<AuthService>();
     final workouts = context.watch<WorkoutService>();
+    final profile = context.watch<ProfileService>().profile;
     final workout = workouts.todayWorkout;
     final groups = workout?.groups ?? const [];
     final isMobile = MediaQuery.sizeOf(context).width < 700;
@@ -147,7 +149,7 @@ class _HomeScreenState extends State<HomeScreen> {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Hi, ${auth.displayName}'),
+            Text('Hi, ${profile?.username ?? auth.displayName}'),
             Text(
               DateFormat('EEEE, d MMMM').format(today()),
               style: theme.textTheme.bodySmall

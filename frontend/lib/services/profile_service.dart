@@ -4,10 +4,16 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../core/env.dart';
 
 class AppProfile {
-  const AppProfile({required this.id, this.username, required this.role});
+  const AppProfile({
+    required this.id,
+    this.username,
+    this.fullName,
+    required this.role,
+  });
 
   final String id;
   final String? username;
+  final String? fullName;
   final String role;
 
   bool get isTrainer => role == 'trainer';
@@ -16,6 +22,7 @@ class AppProfile {
   factory AppProfile.fromMap(Map<String, dynamic> map) => AppProfile(
         id: map['id'] as String,
         username: map['username'] as String?,
+        fullName: map['full_name'] as String?,
         role: (map['role'] as String?) ?? 'client',
       );
 }
@@ -53,7 +60,7 @@ class ProfileService extends ChangeNotifier {
     try {
       var row = await _client
           .from('profiles')
-          .select('id, username, role')
+          .select('id, username, full_name, role')
           .eq('id', user.id)
           .maybeSingle()
           .timeout(Env.networkTimeout);
@@ -77,7 +84,7 @@ class ProfileService extends ChangeNotifier {
 
         row = await _client
             .from('profiles')
-            .select('id, username, role')
+            .select('id, username, full_name, role')
             .eq('id', user.id)
             .maybeSingle()
             .timeout(Env.networkTimeout);
